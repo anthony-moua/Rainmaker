@@ -1,10 +1,13 @@
 import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.scene.Scene;
+import javafx.scene.input.KeyCode;
+import javafx.scene.shape.Ellipse;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.paint.Color;
+import javafx.scene.Node;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.control.Label;
 import javafx.scene.Group;
@@ -22,6 +25,8 @@ public class Rainmaker extends Application {
 
 
     /* Called automatically when application is set up */
+    GameApp gameApp = new GameApp();
+
     public void start(Stage stage) {
         // Add to root's children to make objects visible
         Group root = new Group();
@@ -29,16 +34,34 @@ public class Rainmaker extends Application {
         // set up the scene
         stage.setScene(scene);
         stage.setTitle("Rainmaker");
-        scene.setFill(Color.WHITE);
+        scene.setFill(Color.BLACK);
         // GameHandler object manages the rules and conditions of the game
-        GameHandler g = new GameHandler();
+        GameApp g = new GameApp();
 
 
         // pressing I and S toggle the fps display and sound
         scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
-                if(event.getText().equalsIgnoreCase("I")){
+                if(event.getCode() == KeyCode.UP){
+
+                }
+                if(event.getCode() == KeyCode.LEFT){
+
+                }
+                if(event.getCode() == KeyCode.DOWN){
+
+                }
+                if(event.getCode() == KeyCode.RIGHT){
+
+                }
+                if(event.getCode() == KeyCode.I){
+
+                }
+                if(event.getCode() == KeyCode.B){
+
+                }
+                if(event.getCode() == KeyCode.R){
 
                 }
             }
@@ -63,29 +86,61 @@ public class Rainmaker extends Application {
         launch(args);
     }
 }
-abstract class GameObject {
-
+abstract class GameObject extends Group implements Updatable {
+    void add (Node node) {this.getChildren().add(node);}
 }
-
+interface Updatable {
+    public void update();
+}
 class Helicopter extends GameObject {
-
-}
-class HeliPad extends GameObject {
-
-}
-class Cloud extends GameObject {
-
-}
-class Pond extends GameObject {
-
-}
-
-class GameHandler {
-    public GameHandler() {
+    private Ellipse helicopterBody = new Ellipse(0,0, 20,20);
+    public Helicopter() {
+        this.helicopterBody.setFill(Color.YELLOW);
+    }
+    @Override
+    public void update() {
 
     }
+}
+class HeliPad extends GameObject {
+    private Rectangle helipadShape = new Rectangle(0,0,40,40);
+    public HeliPad() {
+        this.helipadShape.setFill(Color.GRAY);
+    }
+    @Override
+    public void update() {
+
+    }
+}
+class Cloud extends GameObject {
+    private Ellipse cloudShape = new Ellipse(0,0, 20,20);
+    public Cloud() {
+        this.cloudShape.setFill(Color.WHITE);
+    }
+    @Override
+    public void update() {
+
+    }
+}
+class Pond extends GameObject {
+    private Ellipse pondShape = new Ellipse(0,0, 20,20);
+    public Pond() {
+        this.pondShape.setFill(Color.BLUE);
+    }
+    @Override
+    public void update() {
+
+    }
+}
+
+class GameApp extends Application {
+
     public void reset() {
 
     }
 
+    @Override
+    public void start(Stage stage) throws Exception {
+
+    }
 }
