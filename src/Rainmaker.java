@@ -22,50 +22,34 @@ public class Rainmaker extends Application {
     // Constants
     public static final int WINDOW_WIDTH = 700;
     public static final int WINDOW_HEIGHT = 900;
-
-
-    /* Called automatically when application is set up */
     GameApp gameApp = new GameApp();
 
     public void start(Stage stage) {
+        gameApp.start(stage);
+    }
+
+    public static void main(String[] args) {
+        launch(args);
+    }
+}
+class GameApp extends Application {
+    static Group root = new Group();
+    static Scene scene = new Scene(root, Rainmaker.WINDOW_WIDTH,
+            Rainmaker.WINDOW_HEIGHT);
+    public void reset() {
+
+    }
+
+    @Override
+    public void start(Stage stage) {
         // Add to root's children to make objects visible
-        Group root = new Group();
-        Scene scene = new Scene(root, WINDOW_WIDTH, WINDOW_HEIGHT);
+
         // set up the scene
         stage.setScene(scene);
         stage.setTitle("Rainmaker");
         scene.setFill(Color.BLACK);
-        // GameHandler object manages the rules and conditions of the game
-        GameApp g = new GameApp();
+        GameApp.CheckInput();
 
-
-        // pressing I and S toggle the fps display and sound
-        scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent event) {
-                if(event.getCode() == KeyCode.UP){
-
-                }
-                if(event.getCode() == KeyCode.LEFT){
-
-                }
-                if(event.getCode() == KeyCode.DOWN){
-
-                }
-                if(event.getCode() == KeyCode.RIGHT){
-
-                }
-                if(event.getCode() == KeyCode.I){
-
-                }
-                if(event.getCode() == KeyCode.B){
-
-                }
-                if(event.getCode() == KeyCode.R){
-
-                }
-            }
-        });
 
         AnimationTimer loop = new AnimationTimer() {
             double old = -1;
@@ -82,8 +66,34 @@ public class Rainmaker extends Application {
         loop.start();
         stage.show();
     }
-    public static void main(String[] args) {
-        launch(args);
+
+    private static void CheckInput() {
+        scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
+            @Override
+            public void handle(KeyEvent event) {
+                if(event.getCode() == KeyCode.UP){
+                    System.out.println("UP");
+                }
+                if(event.getCode() == KeyCode.LEFT){
+                    System.out.println("LEFT");
+                }
+                if(event.getCode() == KeyCode.DOWN){
+                    System.out.println("DOWN");
+                }
+                if(event.getCode() == KeyCode.RIGHT){
+                    System.out.println("RIGHT");
+                }
+                if(event.getCode() == KeyCode.I){
+
+                }
+                if(event.getCode() == KeyCode.B){
+
+                }
+                if(event.getCode() == KeyCode.R){
+
+                }
+            }
+        });
     }
 }
 abstract class GameObject extends Group implements Updatable {
@@ -133,14 +143,3 @@ class Pond extends GameObject {
     }
 }
 
-class GameApp extends Application {
-
-    public void reset() {
-
-    }
-
-    @Override
-    public void start(Stage stage) throws Exception {
-
-    }
-}
