@@ -40,7 +40,10 @@ class Game extends Pane implements Updatable{
 
     @Override
     public void update() {
-
+        for(Node n : getChildren()) {
+            if (n instanceof Updatable)
+                ((Updatable) n).update();
+        }
     }
 }
 class GameApp extends Application {
@@ -168,15 +171,10 @@ class Helicopter extends GameObject {
     public void toggleIgnition(){
         ignitionOn = !ignitionOn;
     }
-    @Override
-    public void update() {
-        this.setTranslateY(this.getTranslateY() + speed);
-    }
 
     public void move() {
-        if(speed < 10) {
-            speed += .1;
-        }
+        this.setTranslateX(this.getTranslateX() + speed);
+        this.setTranslateY(this.getTranslateY() + speed);
     }
 }
 class HeliPad extends GameObject {
@@ -202,19 +200,11 @@ class HeliPad extends GameObject {
 
     }
 
-    @Override
-    public void update() {
-
-    }
 }
 class Cloud extends GameObject {
     private Ellipse cloudShape = new Ellipse(0,0, 20,20);
     public Cloud() {
         this.cloudShape.setFill(Color.WHITE);
-    }
-    @Override
-    public void update() {
-
     }
 }
 class Pond extends GameObject {
@@ -222,9 +212,6 @@ class Pond extends GameObject {
     public Pond() {
         this.pondShape.setFill(Color.BLUE);
     }
-    @Override
-    public void update() {
 
-    }
 }
 
