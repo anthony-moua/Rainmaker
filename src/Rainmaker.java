@@ -152,7 +152,7 @@ class Helicopter extends GameObject {
     private int feul = 25000;
     private GameText feulText = new GameText("F:" + feul, Color.YELLOW);
     private boolean onHelipad = true;
-
+    private double speed = 0;
     private boolean ignitionOn = false;
     public Helicopter() {
         helicopterBody.setFill(Color.YELLOW);
@@ -170,10 +170,13 @@ class Helicopter extends GameObject {
     }
     @Override
     public void update() {
-
+        this.setTranslateY(this.getTranslateY() + speed);
     }
 
     public void move() {
+        if(speed < 10) {
+            speed += .1;
+        }
     }
 }
 class HeliPad extends GameObject {
