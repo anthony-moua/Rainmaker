@@ -47,8 +47,8 @@ class Game extends Pane implements Updatable{
     }
 }
 class GameApp extends Application {
-    static Game game = new Game();
-    static Scene scene = new Scene(game, Rainmaker.WINDOW_WIDTH,
+    Game game = new Game();
+    Scene scene = new Scene(game, Rainmaker.WINDOW_WIDTH,
             Rainmaker.WINDOW_HEIGHT);
 
     public void reset() {
@@ -67,9 +67,10 @@ class GameApp extends Application {
         Helicopter helicopter = new Helicopter();
         HeliPad heliPad = new HeliPad(500, 500);
 
-        GameApp.CheckInput(helicopter);
+        CheckInput(helicopter);
         game.getChildren().add(heliPad);
         game.getChildren().add(helicopter);
+        
         //System.out.println(game.getChildren());
 
         helicopter.setTranslateX(Rainmaker.WINDOW_WIDTH/2);
@@ -87,6 +88,7 @@ class GameApp extends Application {
                 elapsedTime += delta;
 
             }
+            // game.update();
 
         };
 
@@ -94,7 +96,7 @@ class GameApp extends Application {
         stage.show();
     }
 
-    private static void CheckInput(Helicopter helicopter) {
+    private void CheckInput(Helicopter helicopter) {
         scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
@@ -128,10 +130,9 @@ abstract class GameObject extends Group implements Updatable {
 
     @Override
     public void update() {
-
+        System.out.println("update test");
     }
 }
-
 class GameText extends GameObject {
     private Text text;
     public GameText(String text, Color color) {
@@ -173,8 +174,14 @@ class Helicopter extends GameObject {
     }
 
     public void move() {
+        System.out.println("helicopter move");
         this.setTranslateX(this.getTranslateX() + speed);
         this.setTranslateY(this.getTranslateY() + speed);
+    }
+    @Override
+    public void update() {
+        System.out.println("helicopter update");
+        this.move();
     }
 }
 class HeliPad extends GameObject {
