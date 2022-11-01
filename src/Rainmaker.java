@@ -70,14 +70,13 @@ class GameApp extends Application {
         CheckInput(helicopter);
         game.getChildren().add(heliPad);
         game.getChildren().add(helicopter);
-        
-        //System.out.println(game.getChildren());
 
         helicopter.setTranslateX(Rainmaker.WINDOW_WIDTH/2);
         helicopter.setTranslateY(Rainmaker.WINDOW_WIDTH/5);
 
         heliPad.setTranslateX(Rainmaker.WINDOW_WIDTH/2);
         heliPad.setTranslateY(Rainmaker.WINDOW_WIDTH/5);
+        // game.update();
         AnimationTimer loop = new AnimationTimer() {
             double old = -1;
             double elapsedTime = 0;
@@ -86,10 +85,17 @@ class GameApp extends Application {
                 double delta = (nano - old) / 1e9;
                 old = nano;
                 elapsedTime += delta;
+                game.update();
+
+
+
+
+
+
+
+
 
             }
-            // game.update();
-
         };
 
         loop.start();
