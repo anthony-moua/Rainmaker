@@ -107,7 +107,7 @@ class GameApp extends Application {
             @Override
             public void handle(KeyEvent event) {
                 if(event.getCode() == KeyCode.UP){
-                    helicopter.move();
+                    helicopter.speedUp();
                 }
                 if(event.getCode() == KeyCode.LEFT){
                     System.out.println("LEFT");
@@ -160,6 +160,7 @@ class Helicopter extends GameObject {
     private BoundingBox heliBB = new BoundingBox(0,0,50,50);
     // private Rectangle heliVisibleBB = new Rectangle(50,50);
     private int feul = 25000;
+    private int direction = 0;
     private GameText feulText = new GameText("F:" + feul, Color.YELLOW);
     private boolean onHelipad = true;
     private double speed = 0;
@@ -179,15 +180,33 @@ class Helicopter extends GameObject {
         ignitionOn = !ignitionOn;
     }
 
-    public void move() {
-        System.out.println("helicopter move");
-        this.setTranslateX(this.getTranslateX() + speed);
-        this.setTranslateY(this.getTranslateY() + speed);
+    public void speedUp() {
+        speed += .1;
+        if(speed > 10) {
+            speed = 10;
+        }
+
+    }
+    public void slowDown() {
+        speed -= .1;
+        if(speed < -2) {
+            speed = -2;
+        }
+
     }
     @Override
     public void update() {
         System.out.println("helicopter update");
         this.move();
+    }
+
+    private void move() {
+        this.setTranslateX(this.getTranslateX() + speed);
+        this.setTranslateY(this.getTranslateY() + speed);
+    }
+    private void turn(int turnAmount) {
+        this.setRotate(this.getRotate() + turnAmount);
+        direction = (direction + turnAmount) % 360;
     }
 }
 class HeliPad extends GameObject {
