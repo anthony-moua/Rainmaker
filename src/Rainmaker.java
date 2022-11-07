@@ -16,7 +16,7 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.Group;
 import javafx.animation.AnimationTimer;
 import javafx.scene.transform.Rotate;
-import java.util.*;
+import javafx.geometry.BoundingBox;
 
 /**
  * Rainmaker game
@@ -45,6 +45,9 @@ class Game extends Pane implements Updatable{
                 ((Updatable) n).update();
         }
     }
+
+    public void reset() {
+    }
 }
 class GameApp extends Application {
     Game game = new Game();
@@ -66,16 +69,23 @@ class GameApp extends Application {
 
         Helicopter helicopter = new Helicopter();
         HeliPad heliPad = new HeliPad(500, 500);
+        Pond pond = new Pond(Math.random()*Rainmaker.WINDOW_WIDTH,
+                Math.random()*Rainmaker.WINDOW_WIDTH);
+        Cloud cloud = new Cloud(Math.random()*Rainmaker.WINDOW_WIDTH,
+                Math.random()*Rainmaker.WINDOW_WIDTH);
 
         CheckInput(helicopter);
+
+        game.getChildren().add(pond);
+        game.getChildren().add(cloud);
         game.getChildren().add(heliPad);
         game.getChildren().add(helicopter);
 
-        helicopter.setTranslateX(Rainmaker.WINDOW_WIDTH/2);
-        helicopter.setTranslateY(Rainmaker.WINDOW_WIDTH/5);
+        helicopter.setTranslateX((double)Rainmaker.WINDOW_WIDTH/2);
+        helicopter.setTranslateY((double)Rainmaker.WINDOW_WIDTH/5);
 
-        heliPad.setTranslateX(Rainmaker.WINDOW_WIDTH/2);
-        heliPad.setTranslateY(Rainmaker.WINDOW_WIDTH/5);
+        heliPad.setTranslateX((double)Rainmaker.WINDOW_WIDTH/2);
+        heliPad.setTranslateY((double)Rainmaker.WINDOW_WIDTH/5);
         // game.update();
         AnimationTimer loop = new AnimationTimer() {
             double old = -1;
@@ -89,15 +99,8 @@ class GameApp extends Application {
 
 
 
-
-
-
-
-
-
             }
         };
-
         loop.start();
         stage.show();
     }
@@ -108,20 +111,20 @@ class GameApp extends Application {
             public void handle(KeyEvent event) {
                 if(helicopter.getIgnition()) {
                     if (event.getCode() == KeyCode.UP) {
-                        System.out.println("UP");
+                        // System.out.println("UP");
                         helicopter.speedUp();
                     }
                     if (event.getCode() == KeyCode.LEFT) {
-                        helicopter.turn(-10);
-                        System.out.println("LEFT");
+                        helicopter.turnHelicopter(-10);
+                        // System.out.println("LEFT");
                     }
                     if (event.getCode() == KeyCode.DOWN) {
-                        System.out.println("DOWN");
+                        // System.out.println("DOWN");
                         helicopter.slowDown();
                     }
                     if (event.getCode() == KeyCode.RIGHT) {
-                        System.out.println("RIGHT");
-                        helicopter.turn(10);
+                        // System.out.println("RIGHT");
+                        helicopter.turnHelicopter(10);
                     }
                 }
                 if(event.getCode() == KeyCode.I){
@@ -131,17 +134,21 @@ class GameApp extends Application {
 
                 }
                 if(event.getCode() == KeyCode.B){
-
+                    // System.out.println("display BoundingBox");
+                    helicopter.toggleBoundingBoxDisplay();
                 }
                 if(event.getCode() == KeyCode.R){
-
+                    // System.out.println("reset game");
+                    reset();
                 }
             }
         });
     }
 }
 abstract class GameObject extends Group implements Updatable {
-    void add (Node node) {this.getChildren().add(node);}
+    void add (Node node) {
+        this.getChildren().add(node);
+    }
 
     @Override
     public void update() {
@@ -169,39 +176,76 @@ interface Updatable {
     public void update();
 }
 class Helicopter extends GameObject {
-    // private Ellipse helicopterBody = new Ellipse(20,20)
-    private Ellipse helicopterBody = new Ellipse(20,20);
+    private Ellipse helicopterBody;
     private Rotate pivotPoint = new Rotate();
-    private Line pointerLine = new Line(0,0,0,40);
-    private BoundingBox heliBB = new BoundingBox(0,0,50,50);
-    // private Rectangle heliVisibleBB = new Rectangle(50,50);
+    private BoundingBox heliBB;
+    private Line pointerLine;
+    private Rectangle heliVisibleBB;
+    private GameText feulText;
     private int feul = 25000;
     private double direction = 0;
-    private GameText feulText = new GameText("F:" + feul, Color.YELLOW);
-    private boolean onHelipad = true;
     private double speed = 0;
+    private boolean onHelipad = true;
+    private boolean BBdisplay = false;
     private boolean ignitionOn = false;
     public Helicopter() {
+        helicopterBody = new Ellipse(0,0,20,20);
         helicopterBody.setFill(Color.YELLOW);
+        pointerLine = new Line(0,0,0,40);
         pointerLine.setStroke(Color.YELLOW);
         pointerLine.setStrokeWidth(2);
+        feulText = new GameText("F:" + feul, Color.YELLOW);
+        heliBB = new BoundingBox(-helicopterBody.getRadiusX(),
+                -helicopterBody.getRadiusY(),helicopterBody.getRadiusX()*2,
+                helicopterBody.getRadiusY()+40);
+        heliVisibleBB = new Rectangle(-helicopterBody.getRadiusX(),
+                -helicopterBody.getRadiusY(),helicopterBody.getRadiusX()*2,
+                helicopterBody.getRadiusY()+40);
+
         add(helicopterBody);
         add(pointerLine);
         add(feulText);
+        add(heliVisibleBB);
+
         feulText.setTranslateX(feulText.getTranslateX() - 30);
         feulText.setTranslateY(feulText.getTranslateY() - 30);
-        feulText.setUserData("FuelText");
-        //pivotPoint.setPivotX(0);
-        //pivotPoint.setPivotY(10);
-        //this.getTransforms().addAll(pivotPoint);
+        heliVisibleBB.setFill(Color.TRANSPARENT);
+        heliVisibleBB.setStroke(Color.WHITE);
+
+
+        pivotPoint.setPivotX(0);
+        pivotPoint.setPivotY(10);
+        this.getTransforms().addAll(pivotPoint);
         //pivotPoint.setAngle(0);
 
     }
-    public void toggleIgnition(){
+    @Override
+    public void update() {
+        //System.out.println("helicopter update");
         if(feul > 0) {
-            ignitionOn = !ignitionOn;
-            speed = 0;
+            moveHelicopter();
+            if (ignitionOn) {
+                feulText.updateText("F:" + feul);
+            }
         }
+
+        checkCollision();
+
+    }
+    private void reshapeBoundingBox(double turnAmount) {
+        //heliBB.
+        heliVisibleBB.setRotate(heliVisibleBB.getRotate()+turnAmount);
+        heliVisibleBB.setWidth(heliVisibleBB.getWidth() + (Math.cos(direction)
+                * pointerLine.getEndY()/10));
+        heliVisibleBB.setHeight(heliVisibleBB.getWidth() + (Math.sin(direction)
+                * pointerLine.getEndY()/10));
+    }
+    private void checkCollision() {
+
+    }
+    public void toggleIgnition(){
+        ignitionOn = !ignitionOn;
+        speed = 0;
     }
 
     public void speedUp() {
@@ -218,20 +262,10 @@ class Helicopter extends GameObject {
         }
 
     }
-    @Override
-    public void update() {
-        //System.out.println("helicopter update");
-        move();
-        if(ignitionOn){
-            feulText.updateText("F:" + feul);
-        }
-
-    }
-
     private void burnFuel() {
         if(feul > 0) {
-            int feulBurned = 5 + (int)(speed * 20);
-            feul -= feulBurned;
+            int fuelBurned = 5 + (int)(speed * 10);
+            feul -= fuelBurned;
         }
         if(feul <= 0) {
             feul = 0;
@@ -240,18 +274,18 @@ class Helicopter extends GameObject {
         }
     }
 
-    private void move() {
+    private void moveHelicopter() {
         if(feul > 0) {
             setTranslateX(getTranslateX() + Math.sin(direction) * speed);
             setTranslateY(getTranslateY() + Math.cos(direction) * speed);
             burnFuel();
         }
     }
-    public void turn(double turnAmount) {
+    public void turnHelicopter(double turnAmount) {
         setRotate(getRotate() - turnAmount);
-        turnAmount = Math.toRadians(turnAmount);
-        direction = (direction + turnAmount) % 360;
-        System.out.println(direction);
+        direction = (direction + Math.toRadians(turnAmount)) % 360;
+        reshapeBoundingBox(turnAmount);
+        //System.out.println(direction);
 
     }
 
@@ -261,6 +295,10 @@ class Helicopter extends GameObject {
 
     public double getSpeed() {
         return speed;
+    }
+
+    public void toggleBoundingBoxDisplay() {
+        BBdisplay = !BBdisplay;
     }
 }
 class HeliPad extends GameObject {
@@ -288,16 +326,48 @@ class HeliPad extends GameObject {
 
 }
 class Cloud extends GameObject {
-    private Ellipse cloudShape = new Ellipse(0,0, 20,20);
-    public Cloud() {
-        cloudShape.setFill(Color.WHITE);
+    private GameText cloudText;
+    private Ellipse cloudShape;
+    private Color cloudColor;
+    private int cloudSeedValue = 0;
+    public Cloud(double x, double y) {
+        this.setTranslateX(x);
+        this.setTranslateY(y);
+        cloudColor = Color.WHITE;
+        cloudShape = new Ellipse(0,0, 80,80);
+        cloudShape.setFill(cloudColor);
+        cloudText = new GameText(cloudSeedValue + "%", Color.BLACK);
+        add(cloudShape);
+        add(cloudText);
+
+        cloudText.setTranslateX(-20);
+        cloudText.setTranslateY(10);
+
+        System.out.println(getChildren());
+    }
+    @Override
+    public void update() {
+
     }
 }
 class Pond extends GameObject {
-    private Ellipse pondShape = new Ellipse(0,0, 20,20);
-    public Pond() {
-        pondShape.setFill(Color.BLUE);
-    }
+    private GameText pondText;
+    private Ellipse pondShape;
+    private int pondFill = 0;
 
+    public Pond(double x, double y) {
+        this.setTranslateX(x);
+        this.setTranslateY(y);
+        pondShape = new Ellipse(0,0, 20,20);
+        pondText = new GameText(pondFill + "%", Color.WHITE);
+        pondShape.setFill(Color.BLUE);
+        add(pondShape);
+        add(pondText);
+
+        pondText.setTranslateX(-10);
+        pondText.setTranslateY(10);
+
+
+    }
 }
 
