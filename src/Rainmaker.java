@@ -195,20 +195,22 @@ class Helicopter extends GameObject {
         pointerLine.setStroke(Color.YELLOW);
         pointerLine.setStrokeWidth(2);
         feulText = new GameText("F:" + feul, Color.YELLOW);
-        heliBB = new BoundingBox(-helicopterBody.getRadiusX(),
-                -helicopterBody.getRadiusY(),helicopterBody.getRadiusX()*2,
-                helicopterBody.getRadiusY()+40);
-        heliVisibleBB = new Rectangle(-helicopterBody.getRadiusX(),
-                -helicopterBody.getRadiusY(),helicopterBody.getRadiusX()*2,
-                helicopterBody.getRadiusY()+40);
 
         add(helicopterBody);
         add(pointerLine);
         add(feulText);
+
+        feulText.setTranslateY(feulText.getTranslateY() - 30);
+        feulText.setTranslateX(feulText.getTranslateX() - 30);
+
+        this.setRotate(this.getRotate());
+
+        heliBB = new BoundingBox(getBoundsInLocal().getMinX(),getBoundsInLocal().getMinY(),
+                getBoundsInLocal().getWidth(),getBoundsInLocal().getHeight());
+        heliVisibleBB = new Rectangle(getBoundsInLocal().getMinX(),getBoundsInLocal().getMinY(),
+                getBoundsInLocal().getWidth(),getBoundsInLocal().getHeight());
         add(heliVisibleBB);
 
-        feulText.setTranslateX(feulText.getTranslateX() - 30);
-        feulText.setTranslateY(feulText.getTranslateY() - 30);
         heliVisibleBB.setFill(Color.TRANSPARENT);
         heliVisibleBB.setStroke(Color.WHITE);
 
@@ -217,6 +219,7 @@ class Helicopter extends GameObject {
         pivotPoint.setPivotY(10);
         this.getTransforms().addAll(pivotPoint);
         //pivotPoint.setAngle(0);
+        System.out.println(this.getBoundsInLocal());
 
     }
     @Override
@@ -234,11 +237,13 @@ class Helicopter extends GameObject {
     }
     private void reshapeBoundingBox(double turnAmount) {
         //heliBB.
+        getChildren().remove(heliVisibleBB);
         heliVisibleBB.setRotate(heliVisibleBB.getRotate()+turnAmount);
-        heliVisibleBB.setWidth(heliVisibleBB.getWidth() + (Math.cos(direction)
-                * pointerLine.getEndY()/10));
-        heliVisibleBB.setHeight(heliVisibleBB.getWidth() + (Math.sin(direction)
-                * pointerLine.getEndY()/10));
+        heliVisibleBB.setX(getBoundsInLocal().getMinX());
+        heliVisibleBB.setY(getBoundsInLocal().getMinY());
+        heliVisibleBB.setWidth(getBoundsInLocal().getWidth());
+        heliVisibleBB.setHeight(getBoundsInLocal().getHeight());
+        getChildren().add(heliVisibleBB);
     }
     private void checkCollision() {
 
@@ -343,7 +348,7 @@ class Cloud extends GameObject {
         cloudText.setTranslateX(-20);
         cloudText.setTranslateY(10);
 
-        System.out.println(getChildren());
+        //System.out.println(getChildren());
     }
     @Override
     public void update() {
