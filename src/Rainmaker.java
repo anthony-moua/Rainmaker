@@ -126,6 +126,9 @@ class GameApp extends Application {
                         // System.out.println("RIGHT");
                         helicopter.turnHelicopter(10);
                     }
+                    if(event.getCode() == KeyCode.SPACE) {
+                        helicopter.seedCloud();
+                    }
                 }
                 if(event.getCode() == KeyCode.I){
                     if(Math.abs(helicopter.getSpeed()) <= 0.1){
@@ -305,6 +308,9 @@ class Helicopter extends GameObject {
     public void toggleBoundingBoxDisplay() {
         BBdisplay = !BBdisplay;
     }
+
+    public void seedCloud() {
+    }
 }
 class HeliPad extends GameObject {
     private Rectangle helipadOutline = new Rectangle(200,200);
@@ -352,7 +358,9 @@ class Cloud extends GameObject {
     }
     @Override
     public void update() {
-
+        if(false) {
+            cloudText.updateText(cloudSeedValue + "%");
+        }
     }
 }
 class Pond extends GameObject {
@@ -373,6 +381,12 @@ class Pond extends GameObject {
         pondText.setTranslateY(10);
 
 
+    }
+    @Override
+    public void update() {
+        if(false) {
+            pondText.updateText(pondFill + "%");
+        }
     }
 }
 
