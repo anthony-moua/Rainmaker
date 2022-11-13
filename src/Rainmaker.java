@@ -181,9 +181,10 @@ interface Updatable {
 class Helicopter extends GameObject {
     private Ellipse helicopterBody;
     private Rotate pivotPoint = new Rotate();
-    private BoundingBox heliBB;
+    private BoundingBox helicopterBoundingBox;
+    private Rectangle helicopterVisibleBoundingBox;
     private Line pointerLine;
-    private Rectangle heliVisibleBB;
+
     private GameText feulText;
     private int feul = 25000;
     private double direction = 0;
@@ -192,36 +193,36 @@ class Helicopter extends GameObject {
     private boolean BBdisplay = false;
     private boolean ignitionOn = false;
     public Helicopter() {
-        helicopterBody = new Ellipse(0,0,20,20);
-        helicopterBody.setFill(Color.YELLOW);
-        pointerLine = new Line(0,0,0,40);
-        pointerLine.setStroke(Color.YELLOW);
-        pointerLine.setStrokeWidth(2);
-        feulText = new GameText("F:" + feul, Color.YELLOW);
+        this.helicopterBody = new Ellipse(0,0,20,20);
+        this.helicopterBody.setFill(Color.YELLOW);
+        this.pointerLine = new Line(0,0,0,40);
+        this.pointerLine.setStroke(Color.YELLOW);
+        this.pointerLine.setStrokeWidth(2);
+        this.feulText = new GameText("F:" + feul, Color.YELLOW);
 
-        add(helicopterBody);
-        add(pointerLine);
-        add(feulText);
+        add(this.helicopterBody);
+        add(this.pointerLine);
+        add(this.feulText);
 
-        feulText.setTranslateY(feulText.getTranslateY() - 30);
-        feulText.setTranslateX(feulText.getTranslateX() - 30);
+        this.feulText.setTranslateY(this.feulText.getTranslateY() - 30);
+        this.feulText.setTranslateX(this.feulText.getTranslateX() - 30);
 
         this.setRotate(this.getRotate());
 
-        heliBB = new BoundingBox(getBoundsInLocal().getMinX(),getBoundsInLocal().getMinY(),
-                getBoundsInLocal().getWidth(),getBoundsInLocal().getHeight());
-        heliVisibleBB = new Rectangle(getBoundsInLocal().getMinX(),getBoundsInLocal().getMinY(),
-                getBoundsInLocal().getWidth(),getBoundsInLocal().getHeight());
-        add(heliVisibleBB);
+        this.helicopterBoundingBox = new BoundingBox(this.getBoundsInLocal().getMinX(),this.getBoundsInLocal().getMinY(),
+                this.getBoundsInLocal().getWidth(),this.getBoundsInLocal().getHeight());
+        this.helicopterVisibleBoundingBox = new Rectangle(this.getBoundsInLocal().getMinX(),this.getBoundsInLocal().getMinY(),
+                this.getBoundsInLocal().getWidth(),this.getBoundsInLocal().getHeight());
+        add(this.helicopterVisibleBoundingBox);
 
-        heliVisibleBB.setFill(Color.TRANSPARENT);
-        heliVisibleBB.setStroke(Color.WHITE);
+        this.helicopterVisibleBoundingBox.setFill(Color.TRANSPARENT);
+        this.helicopterVisibleBoundingBox.setStroke(Color.WHITE);
 
 
-        pivotPoint.setPivotX(0);
-        pivotPoint.setPivotY(10);
+        this.pivotPoint.setPivotX(0);
+        this.pivotPoint.setPivotY(10);
         this.getTransforms().addAll(pivotPoint);
-        //pivotPoint.setAngle(0);
+        //this.pivotPoint.setAngle(0);
         System.out.println(this.getBoundsInLocal());
 
     }
@@ -240,13 +241,13 @@ class Helicopter extends GameObject {
     }
     private void reshapeBoundingBox(double turnAmount) {
         //heliBB.
-        getChildren().remove(heliVisibleBB);
-        heliVisibleBB.setRotate(heliVisibleBB.getRotate()+turnAmount);
-        heliVisibleBB.setX(getBoundsInLocal().getMinX());
-        heliVisibleBB.setY(getBoundsInLocal().getMinY());
-        heliVisibleBB.setWidth(getBoundsInLocal().getWidth());
-        heliVisibleBB.setHeight(getBoundsInLocal().getHeight());
-        getChildren().add(heliVisibleBB);
+        getChildren().remove(helicopterVisibleBoundingBox);
+        helicopterVisibleBoundingBox.setRotate(helicopterVisibleBoundingBox.getRotate()+turnAmount);
+        helicopterVisibleBoundingBox.setX(getBoundsInLocal().getMinX());
+        helicopterVisibleBoundingBox.setY(getBoundsInLocal().getMinY());
+        helicopterVisibleBoundingBox.setWidth(getBoundsInLocal().getWidth());
+        helicopterVisibleBoundingBox.setHeight(getBoundsInLocal().getHeight());
+        getChildren().add(helicopterVisibleBoundingBox);
     }
     private void checkCollision() {
 
@@ -310,25 +311,26 @@ class Helicopter extends GameObject {
     }
 
     public void seedCloud() {
+
     }
 }
 class HeliPad extends GameObject {
     private Rectangle helipadOutline = new Rectangle(200,200);
     private Ellipse helipadCircle = new Ellipse(75,75);
     public HeliPad(int x, int y) {
-        helipadOutline.setFill(Color.TRANSPARENT);
-        helipadOutline.setStroke(Color.WHITE);
-        helipadOutline.setStrokeWidth(2);
-        helipadCircle.setFill(Color.TRANSPARENT);
-        helipadCircle.setStroke(Color.WHITE);
-        helipadCircle.setStrokeWidth(2);
-        add(helipadOutline);
-        add(helipadCircle);
+        this.helipadOutline.setFill(Color.TRANSPARENT);
+        this.helipadOutline.setStroke(Color.WHITE);
+        this.helipadOutline.setStrokeWidth(2);
+        this.helipadCircle.setFill(Color.TRANSPARENT);
+        this.helipadCircle.setStroke(Color.WHITE);
+        this.helipadCircle.setStrokeWidth(2);
+        add(this.helipadOutline);
+        add(this.helipadCircle);
 
-        helipadOutline.setTranslateX(helipadOutline.getX() -
-                helipadOutline.getWidth() / 2);
-        helipadOutline.setTranslateY(helipadOutline.getY() -
-                helipadOutline.getHeight() / 2);
+        this.helipadOutline.setTranslateX(this.helipadOutline.getX() -
+                this.helipadOutline.getWidth() / 2);
+        this.helipadOutline.setTranslateY(this.helipadOutline.getY() -
+                this.helipadOutline.getHeight() / 2);
 
         this.setTranslateX(x);
         this.setTranslateY(y);
@@ -339,20 +341,32 @@ class HeliPad extends GameObject {
 class Cloud extends GameObject {
     private GameText cloudText;
     private Ellipse cloudShape;
+    private BoundingBox cloudBoundingBox;
+    private Rectangle cloudVisibleBoundingBox;
     private Color cloudColor;
     private int cloudSeedValue = 0;
     public Cloud(double x, double y) {
         this.setTranslateX(x);
         this.setTranslateY(y);
-        cloudColor = Color.WHITE;
-        cloudShape = new Ellipse(0,0, 80,80);
-        cloudShape.setFill(cloudColor);
-        cloudText = new GameText(cloudSeedValue + "%", Color.BLACK);
-        add(cloudShape);
-        add(cloudText);
+        this.cloudColor = Color.WHITE;
+        this.cloudShape = new Ellipse(0,0, 80,80);
+        this.cloudShape.setFill(this.cloudColor);
+        this.cloudText = new GameText(this.cloudSeedValue + "%", Color.BLACK);
+        add(this.cloudShape);
+        add(this.cloudText);
 
-        cloudText.setTranslateX(-20);
-        cloudText.setTranslateY(10);
+        this.cloudBoundingBox = new BoundingBox(this.getBoundsInLocal().getMinX(),this.getBoundsInLocal().getMinY(),
+                this.getBoundsInLocal().getWidth(),this.getBoundsInLocal().getHeight());
+        this.cloudVisibleBoundingBox = new Rectangle(this.getBoundsInLocal().getMinX(),this.getBoundsInLocal().getMinY(),
+                this.getBoundsInLocal().getWidth(),this.getBoundsInLocal().getHeight());
+        add(this.cloudVisibleBoundingBox);
+
+        this.cloudVisibleBoundingBox.setFill(Color.TRANSPARENT);
+        this.cloudVisibleBoundingBox.setStroke(Color.WHITE);
+
+
+        this.cloudText.setTranslateX(-20);
+        this.cloudText.setTranslateY(10);
 
         //System.out.println(getChildren());
     }
@@ -366,19 +380,20 @@ class Cloud extends GameObject {
 class Pond extends GameObject {
     private GameText pondText;
     private Ellipse pondShape;
+    private Color cloudColor;
     private int pondFill = 0;
 
     public Pond(double x, double y) {
         this.setTranslateX(x);
         this.setTranslateY(y);
-        pondShape = new Ellipse(0,0, 20,20);
-        pondText = new GameText(pondFill + "%", Color.WHITE);
-        pondShape.setFill(Color.BLUE);
-        add(pondShape);
-        add(pondText);
+        this.pondShape = new Ellipse(0,0, 20,20);
+        this.pondText = new GameText(this.pondFill + "%", Color.WHITE);
+        this.pondShape.setFill(Color.BLUE);
+        add(this.pondShape);
+        add(this.pondText);
 
-        pondText.setTranslateX(-10);
-        pondText.setTranslateY(10);
+        this.pondText.setTranslateX(-10);
+        this.pondText.setTranslateY(10);
 
 
     }
