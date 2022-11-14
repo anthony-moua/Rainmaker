@@ -75,7 +75,7 @@ class GameApp extends Application {
         Cloud cloud = new Cloud(Math.random()*Rainmaker.WINDOW_WIDTH,
                 Math.random()*Rainmaker.WINDOW_WIDTH);
 
-        CheckInput(helicopter);
+        CheckInput();
 
         game.getChildren().add(pond);
         game.getChildren().add(cloud);
@@ -105,38 +105,47 @@ class GameApp extends Application {
         stage.show();
     }
 
-    private void CheckInput(Helicopter helicopter) {
+    private void CheckInput() {
         scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
-                if(helicopter.getIgnition()) {
-                    if (event.getCode() == KeyCode.UP) {
-                        helicopter.speedUp();
+                for (Node n : game.getChildren()) {
+                    if(n instanceof Helicopter) {
+                        if (((Helicopter)n).getIgnition()) {
+                            if (event.getCode() == KeyCode.UP) {
+                                ((Helicopter)n).speedUp();
+                            }
+                            if (event.getCode() == KeyCode.LEFT) {
+                                ((Helicopter)n).turnHelicopter(-10);
+                            }
+                            if (event.getCode() == KeyCode.DOWN) {
+                                ((Helicopter)n).slowDown();
+                            }
+                            if (event.getCode() == KeyCode.RIGHT) {
+                                ((Helicopter)n).turnHelicopter(10);
+                            }
+                            if (event.getCode() == KeyCode.SPACE) {
+                                ((Helicopter)n).seedCloud();
+                            }
+                        }
                     }
-                    if (event.getCode() == KeyCode.LEFT) {
-                        helicopter.turnHelicopter(-10);
-                    }
-                    if (event.getCode() == KeyCode.DOWN) {
-                        helicopter.slowDown();
-                    }
-                    if (event.getCode() == KeyCode.RIGHT) {
-                        helicopter.turnHelicopter(10);
-                    }
-                    if(event.getCode() == KeyCode.SPACE) {
-                        helicopter.seedCloud();
-                    }
-                }
-                if(event.getCode() == KeyCode.I){
-                    if(Math.abs(helicopter.getSpeed()) <= 0.1){
-                        helicopter.toggleIgnition();
-                    }
+                    if (event.getCode() == KeyCode.I) {
+                        if (Math.abs(((Helicopter)n).getSpeed()) <= 0.1) {
+                            ((Helicopter)n).toggleIgnition();
+                        }
 
-                }
-                if(event.getCode() == KeyCode.B){
-                    helicopter.toggleBoundingBoxDisplay();
-                }
-                if(event.getCode() == KeyCode.R){
-                    reset();
+                    }
+                    if (event.getCode() == KeyCode.B) {
+                        if(n instanceof Helicopter) {
+                            ((Helicopter) n).toggleBoundingBoxDisplay();
+                        }
+                        if(n instanceof Cloud) {
+                            ((Cloud) n).toggleBoundingBoxDisplay();
+                        }
+                    }
+                    if (event.getCode() == KeyCode.R) {
+                        reset();
+                    }
                 }
             }
         });
@@ -330,6 +339,12 @@ class Helicopter extends GameObject {
 
     public void toggleBoundingBoxDisplay() {
         displayBoundingBox = !displayBoundingBox;
+        if(displayBoundingBox){
+            helicopterBoundingBox.setStroke(Color.WHITE);
+        }
+        else {
+            helicopterBoundingBox.setStroke(Color.TRANSPARENT);
+        }
     }
 
     public void seedCloud() {
@@ -363,10 +378,10 @@ class HeliPad extends GameObject {
 class Cloud extends GameObject {
     private GameText cloudText;
     private Ellipse cloudShape;
-    private BoundingBox cloudBoundingBox;
-    private Rectangle cloudVisibleBoundingBox;
+    private Rectangle cloudBoundingBox;
     private Color cloudColor;
     private int cloudSeedValue = 0;
+    private boolean displayBoundingBox = false;
     public Cloud(double x, double y) {
         this.setTranslateX(x);
         this.setTranslateY(y);
@@ -379,20 +394,15 @@ class Cloud extends GameObject {
         add(this.cloudText);
 
         this.cloudBoundingBox =
-                new BoundingBox(this.getBoundsInLocal().getMinX() + x,
-                        this.getBoundsInLocal().getMinY() + y,
-                        this.getBoundsInLocal().getWidth(),
-                        this.getBoundsInLocal().getHeight());
-        this.cloudVisibleBoundingBox =
                 new Rectangle(this.getBoundsInLocal().getMinX(),
                         this.getBoundsInLocal().getMinY(),
                         this.getBoundsInLocal().getWidth(),
                         this.getBoundsInLocal().getHeight());
 
-        add(this.cloudVisibleBoundingBox);
+        add(this.cloudBoundingBox);
 
-        this.cloudVisibleBoundingBox.setFill(Color.TRANSPARENT);
-        this.cloudVisibleBoundingBox.setStroke(Color.WHITE);
+        this.cloudBoundingBox.setFill(Color.TRANSPARENT);
+        this.cloudBoundingBox.setStroke(Color.WHITE);
 
 
         this.cloudText.setTranslateX(-20);
@@ -406,18 +416,28 @@ class Cloud extends GameObject {
             cloudText.updateText(cloudSeedValue + "%");
         }
     }
-    public BoundingBox getBoundingBox(){
+    public Rectangle getBoundingBox(){
         return this.cloudBoundingBox;
     }
 
     public Ellipse getCloudShape() {
         return cloudShape;
     }
+
+    public void toggleBoundingBoxDisplay() {
+        displayBoundingBox = !displayBoundingBox;
+        if(displayBoundingBox){
+            cloudBoundingBox.setStroke(Color.WHITE);
+        }
+        else {
+            cloudBoundingBox.setStroke(Color.TRANSPARENT);
+        }
+    }
 }
 class Pond extends GameObject {
     private GameText pondText;
     private Ellipse pondShape;
-    private Color pondColor;
+    //private Color pondColor;
     private int pondFill = 0;
 
     public Pond(double x, double y) {
