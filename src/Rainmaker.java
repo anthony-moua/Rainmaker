@@ -41,8 +41,9 @@ class Game extends Pane implements Updatable{
     @Override
     public void update() {
         for(Node n : getChildren()) {
-            if (n instanceof Updatable)
+            if (n instanceof Updatable) {
                 ((Updatable) n).update();
+            }
         }
     }
 
@@ -86,7 +87,6 @@ class GameApp extends Application {
 
         heliPad.setTranslateX((double)Rainmaker.WINDOW_WIDTH/2);
         heliPad.setTranslateY((double)Rainmaker.WINDOW_WIDTH/5);
-        // game.update();
         AnimationTimer loop = new AnimationTimer() {
             double old = -1;
             double elapsedTime = 0;
@@ -111,19 +111,15 @@ class GameApp extends Application {
             public void handle(KeyEvent event) {
                 if(helicopter.getIgnition()) {
                     if (event.getCode() == KeyCode.UP) {
-                        // System.out.println("UP");
                         helicopter.speedUp();
                     }
                     if (event.getCode() == KeyCode.LEFT) {
                         helicopter.turnHelicopter(-10);
-                        // System.out.println("LEFT");
                     }
                     if (event.getCode() == KeyCode.DOWN) {
-                        // System.out.println("DOWN");
                         helicopter.slowDown();
                     }
                     if (event.getCode() == KeyCode.RIGHT) {
-                        // System.out.println("RIGHT");
                         helicopter.turnHelicopter(10);
                     }
                     if(event.getCode() == KeyCode.SPACE) {
@@ -137,11 +133,9 @@ class GameApp extends Application {
 
                 }
                 if(event.getCode() == KeyCode.B){
-                    // System.out.println("display BoundingBox");
                     helicopter.toggleBoundingBoxDisplay();
                 }
                 if(event.getCode() == KeyCode.R){
-                    // System.out.println("reset game");
                     reset();
                 }
             }
@@ -155,7 +149,6 @@ abstract class GameObject extends Group implements Updatable {
 
     @Override
     public void update() {
-        //System.out.println("update test");
     }
 }
 class GameText extends GameObject implements Updatable{
@@ -168,7 +161,6 @@ class GameText extends GameObject implements Updatable{
         this.getChildren().add(this.text);
     }
     public void updateText(String s) {
-        //System.out.println("update text");
         text.setText(s);
     }
 
@@ -181,8 +173,7 @@ interface Updatable {
 class Helicopter extends GameObject {
     private Ellipse helicopterBody;
     private Rotate pivotPoint = new Rotate();
-    private BoundingBox helicopterBoundingBox;
-    private Rectangle helicopterVisibleBoundingBox;
+    private Rectangle helicopterBoundingBox;
     private Line pointerLine;
 
     private GameText feulText;
@@ -190,8 +181,10 @@ class Helicopter extends GameObject {
     private double direction = 0;
     private double speed = 0;
     private boolean onHelipad = true;
-    private boolean BBdisplay = false;
+    private boolean displayBoundingBox = false;
     private boolean ignitionOn = false;
+    private boolean onCloud;
+
     public Helicopter() {
         this.helicopterBody = new Ellipse(0,0,20,20);
         this.helicopterBody.setFill(Color.YELLOW);
@@ -209,21 +202,24 @@ class Helicopter extends GameObject {
 
         this.setRotate(this.getRotate());
 
-        this.helicopterBoundingBox = new BoundingBox(this.getBoundsInLocal().getMinX(),this.getBoundsInLocal().getMinY(),
-                this.getBoundsInLocal().getWidth(),this.getBoundsInLocal().getHeight());
-        this.helicopterVisibleBoundingBox = new Rectangle(this.getBoundsInLocal().getMinX(),this.getBoundsInLocal().getMinY(),
-                this.getBoundsInLocal().getWidth(),this.getBoundsInLocal().getHeight());
-        add(this.helicopterVisibleBoundingBox);
+        this.helicopterBoundingBox =
+                new Rectangle(this.getBoundsInLocal().getMinX(),
+                        this.getBoundsInLocal().getMinY(),
+                        this.getBoundsInLocal().getWidth(),
+                        this.getBoundsInLocal().getHeight());
 
-        this.helicopterVisibleBoundingBox.setFill(Color.TRANSPARENT);
-        this.helicopterVisibleBoundingBox.setStroke(Color.WHITE);
+        //add(this.helicopterBoundingBox);
+        add(this.helicopterBoundingBox);
+
+
+        this.helicopterBoundingBox.setFill(Color.TRANSPARENT);
+        this.helicopterBoundingBox.setStroke(Color.WHITE);
 
 
         this.pivotPoint.setPivotX(0);
         this.pivotPoint.setPivotY(10);
         this.getTransforms().addAll(pivotPoint);
         //this.pivotPoint.setAngle(0);
-        System.out.println(this.getBoundsInLocal());
 
     }
     @Override
@@ -239,19 +235,7 @@ class Helicopter extends GameObject {
         checkCollision();
 
     }
-    private void reshapeBoundingBox(double turnAmount) {
-        //heliBB.
-        getChildren().remove(helicopterVisibleBoundingBox);
-        helicopterVisibleBoundingBox.setRotate(helicopterVisibleBoundingBox.getRotate()+turnAmount);
-        helicopterVisibleBoundingBox.setX(getBoundsInLocal().getMinX());
-        helicopterVisibleBoundingBox.setY(getBoundsInLocal().getMinY());
-        helicopterVisibleBoundingBox.setWidth(getBoundsInLocal().getWidth());
-        helicopterVisibleBoundingBox.setHeight(getBoundsInLocal().getHeight());
-        getChildren().add(helicopterVisibleBoundingBox);
-    }
-    private void checkCollision() {
 
-    }
     public void toggleIgnition(){
         ignitionOn = !ignitionOn;
         speed = 0;
@@ -294,10 +278,48 @@ class Helicopter extends GameObject {
         setRotate(getRotate() - turnAmount);
         direction = (direction + Math.toRadians(turnAmount)) % 360;
         reshapeBoundingBox(turnAmount);
-        //System.out.println(direction);
 
     }
+    private void reshapeBoundingBox(double turnAmount) {
+        getChildren().remove(helicopterBoundingBox);
+        helicopterBoundingBox.setRotate
+                (helicopterBoundingBox.getRotate()+turnAmount);
 
+        helicopterBoundingBox.setX(getBoundsInLocal().getMinX());
+        helicopterBoundingBox.setY(getBoundsInLocal().getMinY());
+        helicopterBoundingBox.setWidth(getBoundsInLocal().getWidth());
+        helicopterBoundingBox.setHeight(getBoundsInLocal().getHeight());
+        getChildren().add(helicopterBoundingBox);
+        //System.out.println(helicopterVisibleBoundingBox.getBoundsInLocal());
+        //System.out.println(this.getTranslateX());
+    }
+    private void checkCollision() {
+        boolean isIntersecting = false;
+        for(Node n : this.getParent().getChildrenUnmodifiable()) {
+            if(n instanceof Cloud) {
+                if (this.getTranslateX() > n.getTranslateX() - ((Cloud)n).getCloudShape().getRadiusX() &&
+                    this.getTranslateY() > n.getTranslateY() - ((Cloud)n).getCloudShape().getRadiusY() &&
+                    this.getTranslateX() < n.getTranslateX() + ((Cloud)n).getCloudShape().getRadiusX() &&
+                    this.getTranslateY() < n.getTranslateY() + ((Cloud)n).getCloudShape().getRadiusY()
+                ) {
+                    System.out.println("Helicopter and cloud have collided");
+                    isIntersecting = true;
+                }
+                else{
+                    System.out.println("No collision");
+                }
+                if (isIntersecting)
+                {
+                    this.onCloud = true;
+                }
+                else {
+                    this.onCloud = false;
+                }
+            }
+
+
+        }
+    }
     public boolean getIgnition() {
         return ignitionOn;
     }
@@ -307,7 +329,7 @@ class Helicopter extends GameObject {
     }
 
     public void toggleBoundingBoxDisplay() {
-        BBdisplay = !BBdisplay;
+        displayBoundingBox = !displayBoundingBox;
     }
 
     public void seedCloud() {
@@ -351,14 +373,22 @@ class Cloud extends GameObject {
         this.cloudColor = Color.WHITE;
         this.cloudShape = new Ellipse(0,0, 80,80);
         this.cloudShape.setFill(this.cloudColor);
-        this.cloudText = new GameText(this.cloudSeedValue + "%", Color.BLACK);
+        this.cloudText = new GameText(this.cloudSeedValue + "%",
+                Color.BLACK);
         add(this.cloudShape);
         add(this.cloudText);
 
-        this.cloudBoundingBox = new BoundingBox(this.getBoundsInLocal().getMinX(),this.getBoundsInLocal().getMinY(),
-                this.getBoundsInLocal().getWidth(),this.getBoundsInLocal().getHeight());
-        this.cloudVisibleBoundingBox = new Rectangle(this.getBoundsInLocal().getMinX(),this.getBoundsInLocal().getMinY(),
-                this.getBoundsInLocal().getWidth(),this.getBoundsInLocal().getHeight());
+        this.cloudBoundingBox =
+                new BoundingBox(this.getBoundsInLocal().getMinX() + x,
+                        this.getBoundsInLocal().getMinY() + y,
+                        this.getBoundsInLocal().getWidth(),
+                        this.getBoundsInLocal().getHeight());
+        this.cloudVisibleBoundingBox =
+                new Rectangle(this.getBoundsInLocal().getMinX(),
+                        this.getBoundsInLocal().getMinY(),
+                        this.getBoundsInLocal().getWidth(),
+                        this.getBoundsInLocal().getHeight());
+
         add(this.cloudVisibleBoundingBox);
 
         this.cloudVisibleBoundingBox.setFill(Color.TRANSPARENT);
@@ -368,7 +398,7 @@ class Cloud extends GameObject {
         this.cloudText.setTranslateX(-20);
         this.cloudText.setTranslateY(10);
 
-        //System.out.println(getChildren());
+
     }
     @Override
     public void update() {
@@ -376,11 +406,18 @@ class Cloud extends GameObject {
             cloudText.updateText(cloudSeedValue + "%");
         }
     }
+    public BoundingBox getBoundingBox(){
+        return this.cloudBoundingBox;
+    }
+
+    public Ellipse getCloudShape() {
+        return cloudShape;
+    }
 }
 class Pond extends GameObject {
     private GameText pondText;
     private Ellipse pondShape;
-    private Color cloudColor;
+    private Color pondColor;
     private int pondFill = 0;
 
     public Pond(double x, double y) {
