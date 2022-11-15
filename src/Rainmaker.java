@@ -128,13 +128,13 @@ class GameApp extends Application {
                                 ((Helicopter)n).seedCloud();
                             }
                         }
-                    }
-                    if (event.getCode() == KeyCode.I) {
-                        if (Math.abs(((Helicopter)n).getSpeed()) <= 0.1) {
-                            ((Helicopter)n).toggleIgnition();
+                        if (event.getCode() == KeyCode.I) {
+                            if (Math.abs(((Helicopter)n).getSpeed()) <= 0.1) {
+                                ((Helicopter)n).toggleIgnition();
+                            }
                         }
-
                     }
+
                     if (event.getCode() == KeyCode.B) {
                         if(n instanceof Helicopter) {
                             ((Helicopter) n).toggleBoundingBoxDisplay();
@@ -193,6 +193,7 @@ class Helicopter extends GameObject {
     private boolean displayBoundingBox = false;
     private boolean ignitionOn = false;
     private boolean onCloud;
+    private int currentCloudNumber = -1;
 
     public Helicopter() {
         this.helicopterBody = new Ellipse(0,0,20,20);
@@ -303,7 +304,6 @@ class Helicopter extends GameObject {
         //System.out.println(this.getTranslateX());
     }
     private void checkCollision() {
-        boolean isIntersecting = false;
         for(Node n : this.getParent().getChildrenUnmodifiable()) {
             if(n instanceof Cloud) {
                 if (this.getTranslateX() > n.getTranslateX() - ((Cloud)n).getCloudShape().getRadiusX() &&
@@ -311,18 +311,14 @@ class Helicopter extends GameObject {
                     this.getTranslateX() < n.getTranslateX() + ((Cloud)n).getCloudShape().getRadiusX() &&
                     this.getTranslateY() < n.getTranslateY() + ((Cloud)n).getCloudShape().getRadiusY()
                 ) {
-                    System.out.println("Helicopter and cloud have collided");
-                    isIntersecting = true;
+                    //System.out.println("Helicopter and cloud have collided");
+                    this.onCloud = true;
+                    this.currentCloudNumber = ((Cloud)n).getCloudNumber();
                 }
                 else{
-                    System.out.println("No collision");
-                }
-                if (isIntersecting)
-                {
-                    this.onCloud = true;
-                }
-                else {
+                    //System.out.println("No collision");
                     this.onCloud = false;
+                    this.currentCloudNumber = -1;
                 }
             }
 
@@ -348,7 +344,16 @@ class Helicopter extends GameObject {
     }
 
     public void seedCloud() {
-
+        if(this.onCloud){
+            for(Node n : this.getParent().getChildrenUnmodifiable()) {
+                if(n instanceof Cloud && ((Cloud)n).getCloudNumber() == this.currentCloudNumber) {
+                    ((Cloud)n).activateSeeding();
+                }
+            }
+        }
+        else {
+            // do nothing
+        }
     }
 }
 class HeliPad extends GameObject {
@@ -376,6 +381,8 @@ class HeliPad extends GameObject {
 
 }
 class Cloud extends GameObject {
+    private static int NumClouds = 0;
+    private int cloudNumber;
     private GameText cloudText;
     private Ellipse cloudShape;
     private Rectangle cloudBoundingBox;
@@ -383,6 +390,8 @@ class Cloud extends GameObject {
     private int cloudSeedValue = 0;
     private boolean displayBoundingBox = false;
     public Cloud(double x, double y) {
+        this.cloudNumber = NumClouds;
+        NumClouds++;
         this.setTranslateX(x);
         this.setTranslateY(y);
         this.cloudColor = Color.WHITE;
@@ -412,16 +421,31 @@ class Cloud extends GameObject {
     }
     @Override
     public void update() {
-        if(false) {
+        if(cloudSeedValue > 50) {
+            this.rain();
             cloudText.updateText(cloudSeedValue + "%");
         }
     }
+
+    private void rain() {
+        cloudNumber -= 1;
+        for(Node n : this.getParent().getChildrenUnmodifiable()) {
+            if(n instanceof Pond) {
+                ((Pond)n).fillPond();
+            }
+        }
+
+    }
+
     public Rectangle getBoundingBox(){
         return this.cloudBoundingBox;
     }
 
     public Ellipse getCloudShape() {
         return cloudShape;
+    }
+    public int getCloudNumber() {
+        return this.cloudNumber;
     }
 
     public void toggleBoundingBoxDisplay() {
@@ -433,12 +457,17 @@ class Cloud extends GameObject {
             cloudBoundingBox.setStroke(Color.TRANSPARENT);
         }
     }
+
+    public void activateSeeding() {
+        this.cloudSeedValue += 2;
+    }
 }
 class Pond extends GameObject {
     private GameText pondText;
     private Ellipse pondShape;
     //private Color pondColor;
     private int pondFill = 0;
+    private boolean pondFull = false;
 
     public Pond(double x, double y) {
         this.setTranslateX(x);
@@ -456,8 +485,18 @@ class Pond extends GameObject {
     }
     @Override
     public void update() {
-        if(false) {
+        if(true) {
             pondText.updateText(pondFill + "%");
+        }
+    }
+
+    public void fillPond() {
+        if(this.pondFill < 100) {
+            this.pondFill += 1;
+        }
+        else {
+            pondFill = 100;
+            pondFull = true;
         }
     }
 }
