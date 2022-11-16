@@ -24,8 +24,8 @@ import javafx.geometry.BoundingBox;
 
 public class Rainmaker extends Application {
     // Constants
-    public static final int WINDOW_WIDTH = 700;
-    public static final int WINDOW_HEIGHT = 900;
+    public static final int WINDOW_WIDTH = 800;
+    public static final int WINDOW_HEIGHT = 800;
     GameApp gameApp = new GameApp();
 
     public void start(Stage stage) {
@@ -179,6 +179,10 @@ class GameText extends GameObject implements Updatable{
 interface Updatable {
     public void update();
 }
+interface Observer {
+    public void updateObserve();
+    // public void update(Observable obsu)
+        }
 class Helicopter extends GameObject {
     private Ellipse helicopterBody;
     private Rotate pivotPoint = new Rotate();
@@ -380,7 +384,7 @@ class HeliPad extends GameObject {
     }
 
 }
-class Cloud extends GameObject {
+class Cloud extends GameObject implements Updatable, Observer{
     private static int NumClouds = 0;
     private int cloudNumber;
     private GameText cloudText;
@@ -461,8 +465,32 @@ class Cloud extends GameObject {
     public void activateSeeding() {
         this.cloudSeedValue += 2;
     }
+    @Override
+    public void updateObserve() {
+
+    }
 }
-class Pond extends GameObject {
+class Wind extends GameObject implements Updatable{
+    private static WindParameters windParameters;
+    private static final Wind wind = new Wind(windParameters);
+
+    private Wind(WindParameters windParameters) {
+
+    }
+    public static Wind getWind() {
+        return wind;
+    }
+    @Override
+    public void update() {
+
+    }
+}
+class WindParameters {
+    private int windSpeed = 0;
+    private int windDirectonX;
+    private int windDirectonY;
+}
+class Pond extends GameObject implements Updatable{
     private GameText pondText;
     private Ellipse pondShape;
     //private Color pondColor;
