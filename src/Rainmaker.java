@@ -2,8 +2,9 @@ import javafx.application.Application;
 import javafx.event.EventHandler;
 import javafx.geometry.BoundingBox;
 import javafx.scene.Scene;
+import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
-import javafx.scene.layout.Pane;
+import javafx.scene.layout.*;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Line;
 import javafx.scene.text.Font;
@@ -36,23 +37,10 @@ public class Rainmaker extends Application {
         launch(args);
     }
 }
-class Game extends Pane implements Updatable{
 
-    @Override
-    public void update() {
-        for(Node n : getChildren()) {
-            if (n instanceof Updatable) {
-                ((Updatable) n).update();
-            }
-        }
-    }
-
-    public void reset() {
-    }
-}
 class GameApp extends Application {
-    Game game = new Game();
-    Scene scene = new Scene(game, Rainmaker.WINDOW_WIDTH,
+    private Game game = new Game();
+    private Scene scene = new Scene(game, Rainmaker.WINDOW_WIDTH,
             Rainmaker.WINDOW_HEIGHT);
 
     public void reset() {
@@ -76,6 +64,8 @@ class GameApp extends Application {
                 Math.random()*Rainmaker.WINDOW_WIDTH);
 
         CheckInput();
+
+        game.setBackground(BackgroundObject.getBackground());
 
         game.getChildren().add(pond);
         game.getChildren().add(cloud);
@@ -104,6 +94,7 @@ class GameApp extends Application {
         loop.start();
         stage.show();
     }
+
 
     private void CheckInput() {
         scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
@@ -250,7 +241,7 @@ class Helicopter extends GameObject {
 
     }
 
-    public void toggleIgnition(){
+    public void toggleIgnition() {
         ignitionOn = !ignitionOn;
         speed = 0;
     }
@@ -339,7 +330,7 @@ class Helicopter extends GameObject {
 
     public void toggleBoundingBoxDisplay() {
         displayBoundingBox = !displayBoundingBox;
-        if(displayBoundingBox){
+        if(displayBoundingBox) {
             helicopterBoundingBox.setStroke(Color.WHITE);
         }
         else {
@@ -348,7 +339,7 @@ class Helicopter extends GameObject {
     }
 
     public void seedCloud() {
-        if(this.onCloud){
+        if(this.onCloud) {
             for(Node n : this.getParent().getChildrenUnmodifiable()) {
                 if(n instanceof Cloud && ((Cloud)n).getCloudNumber() == this.currentCloudNumber) {
                     ((Cloud)n).activateSeeding();
@@ -441,7 +432,7 @@ class Cloud extends GameObject implements Updatable, Observer{
 
     }
 
-    public Rectangle getBoundingBox(){
+    public Rectangle getBoundingBox() {
         return this.cloudBoundingBox;
     }
 
@@ -454,7 +445,7 @@ class Cloud extends GameObject implements Updatable, Observer{
 
     public void toggleBoundingBoxDisplay() {
         displayBoundingBox = !displayBoundingBox;
-        if(displayBoundingBox){
+        if(displayBoundingBox) {
             cloudBoundingBox.setStroke(Color.WHITE);
         }
         else {
@@ -513,7 +504,7 @@ class Pond extends GameObject implements Updatable{
     }
     @Override
     public void update() {
-        if(true) {
+        if(true) { // if being filled maybe?
             pondText.updateText(pondFill + "%");
         }
     }
@@ -528,4 +519,23 @@ class Pond extends GameObject implements Updatable{
         }
     }
 }
+class BackgroundObject extends GameObject {
+    private static BackgroundObject backgroundObject= new BackgroundObject();
+    private static Background background;
+    private static BackgroundImage backgroundImage;
 
+    private BackgroundObject() {
+        backgroundImage = new BackgroundImage(new Image("background.png",
+                Rainmaker.WINDOW_WIDTH,Rainmaker.WINDOW_HEIGHT,false,true),
+                BackgroundRepeat.REPEAT, BackgroundRepeat.NO_REPEAT,
+                BackgroundPosition.DEFAULT, BackgroundSize.DEFAULT);
+
+    }
+
+    public static BackgroundObject getBackgroundObject() {
+        return backgroundObject;
+    }
+    public static Background getBackground() {
+        return new Background(backgroundImage);
+    }
+}
