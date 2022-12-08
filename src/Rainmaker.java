@@ -1,6 +1,5 @@
 import javafx.application.Application;
 import javafx.event.EventHandler;
-import javafx.geometry.BoundingBox;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.scene.input.KeyCode;
@@ -17,7 +16,6 @@ import javafx.scene.shape.Rectangle;
 import javafx.scene.Group;
 import javafx.animation.AnimationTimer;
 import javafx.scene.transform.Rotate;
-import javafx.geometry.BoundingBox;
 
 /**
  * Rainmaker game
@@ -27,10 +25,10 @@ public class Rainmaker extends Application {
     // Constants
     public static final int WINDOW_WIDTH = 800;
     public static final int WINDOW_HEIGHT = 800;
-    GameApp gameApp = new GameApp();
+    //GameApp gameApp = new GameApp();
 
     public void start(Stage stage) {
-        gameApp.start(stage);
+        GameApp.getGameApp().start(stage);
     }
 
     public static void main(String[] args) {
@@ -39,9 +37,39 @@ public class Rainmaker extends Application {
 }
 
 class GameApp extends Application {
-    private Game game = new Game();
-    private Scene scene = new Scene(game, Rainmaker.WINDOW_WIDTH,
-            Rainmaker.WINDOW_HEIGHT);
+    private static GameApp gameApp = new GameApp();
+    private Game game;
+    private Scene scene;
+    private Helicopter helicopter;
+    private HeliPad heliPad;
+    private Pond pond;
+    private Cloud cloud;
+
+    private GameApp () {
+        initializeGameAndScene();
+        InitializeGameObjects();
+    }
+
+    private void initializeGameAndScene() {
+        game = Game.getGame();
+        scene = new Scene(game, Rainmaker.WINDOW_WIDTH,
+                Rainmaker.WINDOW_HEIGHT);
+    }
+
+    private void InitializeGameObjects() {
+        StartPosition heliStartPosition =
+                new StartPosition((double)Rainmaker.WINDOW_WIDTH/2, (double)Rainmaker.WINDOW_WIDTH/5);
+        helicopter = new Helicopter(heliStartPosition);
+        heliPad = new HeliPad(heliStartPosition);
+        pond = new Pond(Math.random()*Rainmaker.WINDOW_WIDTH,
+                Math.random()*Rainmaker.WINDOW_WIDTH);
+        cloud = new Cloud(Math.random()*Rainmaker.WINDOW_WIDTH,
+                Math.random()*Rainmaker.WINDOW_WIDTH);
+    }
+
+    public static GameApp getGameApp() {
+        return gameApp;
+    }
 
     public void reset() {
 
@@ -49,34 +77,9 @@ class GameApp extends Application {
 
     @Override
     public void start(Stage stage) {
-        game.setScaleY(-1);
-        // set up the scene
-        stage.setScene(scene);
-        stage.setTitle("Rainmaker");
-        scene.setFill(Color.BLACK);
-        
-
-        Helicopter helicopter = new Helicopter();
-        HeliPad heliPad = new HeliPad(500, 500);
-        Pond pond = new Pond(Math.random()*Rainmaker.WINDOW_WIDTH,
-                Math.random()*Rainmaker.WINDOW_WIDTH);
-        Cloud cloud = new Cloud(Math.random()*Rainmaker.WINDOW_WIDTH,
-                Math.random()*Rainmaker.WINDOW_WIDTH);
-
-        CheckInput();
-
-        game.setBackground(BackgroundObject.getBackground());
-
-        game.getChildren().add(pond);
-        game.getChildren().add(cloud);
-        game.getChildren().add(heliPad);
-        game.getChildren().add(helicopter);
-
-        helicopter.setTranslateX((double)Rainmaker.WINDOW_WIDTH/2);
-        helicopter.setTranslateY((double)Rainmaker.WINDOW_WIDTH/5);
-
-        heliPad.setTranslateX((double)Rainmaker.WINDOW_WIDTH/2);
-        heliPad.setTranslateY((double)Rainmaker.WINDOW_WIDTH/5);
+        setUpStage(stage);
+        createInputHandlers();
+        addObjectsToGame();
         AnimationTimer loop = new AnimationTimer() {
             double old = -1;
             double elapsedTime = 0;
@@ -86,17 +89,29 @@ class GameApp extends Application {
                 old = nano;
                 elapsedTime += delta;
                 game.update();
-
-
-
             }
         };
         loop.start();
         stage.show();
     }
 
+    private void addObjectsToGame() {
+        game.setBackground(BackgroundObject.getBackground());
+        game.getChildren().add(pond);
+        game.getChildren().add(cloud);
+        game.getChildren().add(heliPad);
+        game.getChildren().add(helicopter);
+    }
 
-    private void CheckInput() {
+    private void setUpStage(Stage stage) {
+        game.setScaleY(-1);
+        stage.setScene(scene);
+        stage.setTitle("Rainmaker");
+        scene.setFill(Color.BLACK);
+    }
+
+
+    private void createInputHandlers() {
         scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
@@ -140,6 +155,28 @@ class GameApp extends Application {
                 }
             }
         });
+    }
+}
+class Game extends Pane implements Updatable {
+    private static Game game = new Game();
+    private Game () {
+
+    }
+
+    public static Game getGame() {
+        return game;
+    }
+
+    @Override
+    public void update() {
+        for (Node n : getChildren()) {
+            if (n instanceof Updatable) {
+                ((Updatable) n).update();
+            }
+        }
+    }
+
+    public void reset() {
     }
 }
 abstract class GameObject extends Group implements Updatable {
@@ -190,20 +227,9 @@ class Helicopter extends GameObject {
     private boolean onCloud;
     private int currentCloudNumber = -1;
 
-    public Helicopter() {
-        this.helicopterBody = new Ellipse(0,0,20,20);
-        this.helicopterBody.setFill(Color.YELLOW);
-        this.pointerLine = new Line(0,0,0,40);
-        this.pointerLine.setStroke(Color.YELLOW);
-        this.pointerLine.setStrokeWidth(2);
-        this.feulText = new GameText("F:" + feul, Color.YELLOW);
-
-        add(this.helicopterBody);
-        add(this.pointerLine);
-        add(this.feulText);
-
-        this.feulText.setTranslateY(this.feulText.getTranslateY() - 30);
-        this.feulText.setTranslateX(this.feulText.getTranslateX() - 30);
+    public Helicopter(StartPosition startPosition) {
+        initializeHelocopterPosition(startPosition);
+        buildHelicopter();
 
         this.setRotate(this.getRotate());
 
@@ -213,7 +239,6 @@ class Helicopter extends GameObject {
                         this.getBoundsInLocal().getWidth(),
                         this.getBoundsInLocal().getHeight());
 
-        //add(this.helicopterBoundingBox);
         add(this.helicopterBoundingBox);
 
 
@@ -227,6 +252,28 @@ class Helicopter extends GameObject {
         //this.pivotPoint.setAngle(0);
 
     }
+
+    private void buildHelicopter() {
+        this.helicopterBody = new Ellipse(0,0,20,20);
+        this.helicopterBody.setFill(Color.YELLOW);
+        this.pointerLine = new Line(0,0,0,40);
+        this.pointerLine.setStroke(Color.YELLOW);
+        this.pointerLine.setStrokeWidth(2);
+        this.feulText = new GameText("F:" + feul, Color.YELLOW);
+
+        add(this.helicopterBody);
+        add(this.pointerLine);
+        add(this.feulText);
+
+        this.feulText.setTranslateY(this.feulText.getTranslateY() - 30);
+        this.feulText.setTranslateX(this.feulText.getTranslateX() - 30);
+    }
+
+    private void initializeHelocopterPosition(StartPosition startPosition) {
+        this.setTranslateX(startPosition.getxPos());
+        this.setTranslateY(startPosition.getyPos());
+    }
+
     @Override
     public void update() {
         //System.out.println("helicopter update");
@@ -354,24 +401,29 @@ class Helicopter extends GameObject {
 class HeliPad extends GameObject {
     private Rectangle helipadOutline = new Rectangle(200,200);
     private Ellipse helipadCircle = new Ellipse(75,75);
-    public HeliPad(int x, int y) {
+    public HeliPad(StartPosition startPosition) {
+        initializeHelipadPosition(startPosition);
+
         this.helipadOutline.setFill(Color.TRANSPARENT);
         this.helipadOutline.setStroke(Color.WHITE);
         this.helipadOutline.setStrokeWidth(2);
         this.helipadCircle.setFill(Color.TRANSPARENT);
         this.helipadCircle.setStroke(Color.WHITE);
         this.helipadCircle.setStrokeWidth(2);
-        add(this.helipadOutline);
-        add(this.helipadCircle);
+
 
         this.helipadOutline.setTranslateX(this.helipadOutline.getX() -
                 this.helipadOutline.getWidth() / 2);
         this.helipadOutline.setTranslateY(this.helipadOutline.getY() -
                 this.helipadOutline.getHeight() / 2);
 
-        this.setTranslateX(x);
-        this.setTranslateY(y);
+        add(this.helipadOutline);
+        add(this.helipadCircle);
+    }
 
+    private void initializeHelipadPosition(StartPosition startPosition) {
+        this.setTranslateX(startPosition.getxPos());
+        this.setTranslateY(startPosition.getyPos());
     }
 
 }
@@ -537,5 +589,21 @@ class BackgroundObject extends GameObject {
     }
     public static Background getBackground() {
         return new Background(backgroundImage);
+    }
+}
+class StartPosition {
+    private double xPos;
+    private double yPos;
+
+    public StartPosition(double xPos, double yPos) {
+        this.xPos = xPos;
+        this.yPos = yPos;
+    }
+
+    public double getxPos() {
+        return xPos;
+    }
+    public double getyPos() {
+        return yPos;
     }
 }
