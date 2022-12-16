@@ -43,7 +43,6 @@ class GameApp extends Application {
     private Scene scene;
     private Helicopter helicopter;
     private HeliPad heliPad;
-    private Pond pond;
 
     private GameApp () {
         initializeGameAndScene();
@@ -55,23 +54,17 @@ class GameApp extends Application {
                 Rainmaker.WINDOW_HEIGHT);
     }
     private void InitializeGameObjects() {
-        StartPosition heliStartPosition =
-                new StartPosition((double)Rainmaker.WINDOW_WIDTH/2, (double)Rainmaker.WINDOW_WIDTH/5);
+        Position heliStartPosition =
+                new Position((double)Rainmaker.WINDOW_WIDTH/2, (double)Rainmaker.WINDOW_WIDTH/5);
         helicopter = new Helicopter(heliStartPosition);
         heliPad = new HeliPad(heliStartPosition);
-        pond = new Pond(Math.random()*Rainmaker.WINDOW_WIDTH,
-                Math.random()*Rainmaker.WINDOW_WIDTH);
-        //clouds = new Clouds(5);
-
-        //cloud = new Cloud(Math.random()*Rainmaker.WINDOW_WIDTH,
-                //Math.random()*Rainmaker.WINDOW_WIDTH);
     }
     public static GameApp getGameApp() {
         return gameApp;
     }
     public void reset() {
     helicopter.reset();
-    pond.reset();
+    Ponds.reset();
     Clouds.reset();
     game.reset();
     }
@@ -96,10 +89,14 @@ class GameApp extends Application {
     }
     private void addObjectsToGame() {
         game.setBackground(BackgroundObject.getBackground());
-        game.getChildren().add(pond);
-        game.getChildren().add(Clouds.getCloudList().get(0));
+        game.getChildren().add(Ponds.getPonds());
+        game.getChildren().add(Clouds.getClouds());
+        for (Cloud cloud : Clouds.getCloudList()) {
+            game.getChildren().add(cloud.getBoundingBox().getVisibleBoundingBox());
+        }
         game.getChildren().add(heliPad);
         game.getChildren().add(helicopter);
+        game.getChildren().add(helicopter.getBoundingBox().getVisibleBoundingBox());
     }
     private void setUpStage(Stage stage) {
         game.setScaleY(-1);
@@ -163,7 +160,7 @@ class Game extends Pane implements Updatable {
         }
     }
     public void reset() {
-
+        System.out.println("reset game");
     }
 }
 abstract class GameObject extends Group implements Updatable {
@@ -205,6 +202,7 @@ class GameBoundingBox implements Updatable{
 
     public GameBoundingBox (Rectangle bounds) {
         this.visibleBoundingBox = bounds;
+        System.out.println(bounds.getBoundsInLocal());
         this.invisibleBoundingBox =
                 new BoundingBox(bounds.getBoundsInLocal().getMinX(),
                         bounds.getBoundsInLocal().getMinY(),
@@ -212,6 +210,7 @@ class GameBoundingBox implements Updatable{
                         bounds.getBoundsInLocal().getHeight());
         this.visibleBoundingBox.setFill(Color.TRANSPARENT);
         this.visibleBoundingBox.setStroke(Color.TRANSPARENT);
+        //this.visibleBoundingBox.setStroke(Color.WHITE);
     }
     public Rectangle getVisibleBoundingBox() {
         return visibleBoundingBox;
@@ -231,22 +230,51 @@ class GameBoundingBox implements Updatable{
     }
 
     public void toggle() {
+        //System.out.println("toggle called for " + this);
         displayBoundingBox = !displayBoundingBox;
         if(displayBoundingBox) {
-            visibleBoundingBox.setStroke(Color.WHITE);
+            visibleBoundingBox.setStroke(Color.RED);
         }
         else {
             visibleBoundingBox.setStroke(Color.TRANSPARENT);
         }
     }
+
+    public void setPosition(Position newPosition) {
+        this.visibleBoundingBox.setTranslateX(newPosition.xPos());
+        this.visibleBoundingBox.setTranslateY(newPosition.yPos());
+        //System.out.println(this + " " + this.getVisibleBoundingBox()
+        // .getBoundsInLocal());
+
+        this.invisibleBoundingBox =
+                new BoundingBox(visibleBoundingBox.getTranslateX()-(visibleBoundingBox.getWidth()/2),
+                        visibleBoundingBox.getTranslateY()-(visibleBoundingBox.getHeight()/2),
+                        visibleBoundingBox.getBoundsInLocal().getWidth(),
+                        visibleBoundingBox.getBoundsInLocal().getHeight());
+
+        /*
+        this.visibleBoundingBox.setWidth(200);
+        this.visibleBoundingBox.setHeight(200);
+        this.invisibleBoundingBox =
+                new BoundingBox(visibleBoundingBox.getTranslateX()-(visibleBoundingBox.getWidth()),
+                        visibleBoundingBox.getTranslateY()-(visibleBoundingBox.getHeight()),
+                        200, 200);
+
+         */
+        //System.out.println("visibleBoundingBox.getTranslateX() = " +
+        // visibleBoundingBox.getTranslateX());
+        //System.out.println("visibleBoundingBox.getWidth() = " +
+        // visibleBoundingBox.getWidth());
+    }
 }
 class Helicopter extends GameObject {
     private Ellipse helicopterBody;
     private Rotate pivotPoint = new Rotate();
-    private GameBoundingBox heliBoundingBox;
+    private GameBoundingBox boundingBox;
     private Line pointerLine;
     private GameText feulText;
-    private StartPosition startPosition;
+    private Position startPosition;
+    private Position currentPosition;
     private int feul = 250000;
     private double direction = 0;
     private double speed = 0;
@@ -255,17 +283,15 @@ class Helicopter extends GameObject {
     private boolean onCloud;
     private int currentCloudNumber = -1;
 
-    public Helicopter(StartPosition startPosition) {
+    public Helicopter(Position startPosition) {
         this.startPosition = startPosition;
-        initializeHelocopterPosition(startPosition);
+        this.currentPosition = startPosition;
         buildHelicopter();
+        initializeHelicopterPosition(startPosition);
+        this.boundingBox.setPosition(currentPosition);
 
         //this.setRotate(this.getRotate());
-        Rectangle heliBounds = new Rectangle(this.getBoundsInLocal().getMinX(),
-                this.getBoundsInLocal().getMinY(),
-                this.getBoundsInLocal().getWidth(),
-                this.getBoundsInLocal().getHeight());
-        this.heliBoundingBox = new GameBoundingBox(heliBounds);
+
         /*
         this.pivotPoint.setPivotX(0);
         this.pivotPoint.setPivotY(10);
@@ -282,15 +308,24 @@ class Helicopter extends GameObject {
         this.pointerLine.setStrokeWidth(2);
         this.feulText = new GameText("F:" + feul, Color.YELLOW);
 
+
         add(this.helicopterBody);
         add(this.pointerLine);
-        add(this.feulText);
 
+
+        Rectangle heliBounds = new Rectangle(this.getBoundsInLocal().getMinX(),
+                this.getBoundsInLocal().getMinY(),
+                this.getBoundsInLocal().getWidth(),
+                this.getBoundsInLocal().getHeight());
+        this.boundingBox = new GameBoundingBox(heliBounds);
+        //add(this.heliBoundingBox.getVisibleBoundingBox());
+
+        add(this.feulText);
         this.feulText.setTranslateY(this.feulText.getTranslateY() - 30);
         this.feulText.setTranslateX(this.feulText.getTranslateX() - 30);
     }
 
-    private void initializeHelocopterPosition(StartPosition startPosition) {
+    private void initializeHelicopterPosition(Position startPosition) {
         this.setTranslateX(startPosition.xPos());
         this.setTranslateY(startPosition.yPos());
     }
@@ -305,6 +340,10 @@ class Helicopter extends GameObject {
             }
         }
         checkCollision();
+        this.boundingBox.setPosition(currentPosition);
+        //System.out.println("helicopter currentPosition = " +
+        // currentPosition.xPos() +
+                //", " + currentPosition.yPos());
     }
 
     public void toggleIgnition() {
@@ -340,11 +379,20 @@ class Helicopter extends GameObject {
 
     private void moveHelicopter() {
         if(feul > 0) {
-            setTranslateX(getTranslateX() + Math.sin(direction) * speed);
-            setTranslateY(getTranslateY() + Math.cos(direction) * speed);
+            setTranslateX(this.getTranslateX() + Math.sin(direction) * speed);
+            setTranslateY(this.getTranslateY() + Math.cos(direction) * speed);
+            updateBoundingBoxPosition();
             burnFuel();
         }
     }
+
+    private void updateBoundingBoxPosition() {
+        this.currentPosition = new Position(
+                this.getTranslateX(),
+                this.getTranslateY());
+        this.boundingBox.setPosition(currentPosition);
+    }
+
     public void turnHelicopter(double turnAmount) {
         setRotate(getRotate() - turnAmount);
         direction = (direction + Math.toRadians(turnAmount)) % 360;
@@ -367,40 +415,20 @@ class Helicopter extends GameObject {
          */
     }
     private void checkCollision() {
-        /*
-        for(Node n : this.getParent().getChildrenUnmodifiable()) {
-            if(n instanceof Cloud) {
-                if (this.getTranslateX() > n.getTranslateX() - ((Cloud)n).getCloudShape().getRadiusX() &&
-                    this.getTranslateY() > n.getTranslateY() - ((Cloud)n).getCloudShape().getRadiusY() &&
-                    this.getTranslateX() < n.getTranslateX() + ((Cloud)n).getCloudShape().getRadiusX() &&
-                    this.getTranslateY() < n.getTranslateY() + ((Cloud)n).getCloudShape().getRadiusY()) {
-                    //System.out.println("Helicopter and cloud have collided");
-                    this.onCloud = true;
-                    this.currentCloudNumber = ((Cloud)n).getCloudNumber();
-                }
-                else{
-                    //System.out.println("No collision");
-                    this.onCloud = false;
-                    this.currentCloudNumber = -1;
-                }
+        for(Cloud cloud : Clouds.getCloudList()) {
+            boolean collidingWithCloud = boundingBox.getInvisibleBoundingBox().
+                    intersects(cloud.getBoundingBox().getInvisibleBoundingBox());
+            if (collidingWithCloud) {
+                //System.out.println("Helicopter and cloud number "+
+                 //.getCloudNumber() +" have collided");
+                this.onCloud = true;
+                this.currentCloudNumber = cloud.getCloudNumber();
+                return;
             }
         }
-         */
-        for(Cloud cloud : Clouds.getCloudList()) {
-            boolean collidingWithCloud =
-                    heliBoundingBox.getInvisibleBoundingBox().intersects(cloud.getBoundingBox());
-                if (collidingWithCloud) {
-                    //System.out.println("Helicopter and cloud number "+
-                    // cloud.getCloudNumber() +" have collided");
-                    this.onCloud = true;
-                    this.currentCloudNumber = cloud.getCloudNumber();
-                }
-                else{
-                    //System.out.println("No collision");
-                    this.onCloud = false;
-                    this.currentCloudNumber = -1;
-                }
-        }
+        //System.out.println("No collision");
+        this.onCloud = false;
+        this.currentCloudNumber = -1;
     }
     public boolean getIgnition() {
         return ignitionOn;
@@ -411,14 +439,18 @@ class Helicopter extends GameObject {
     }
 
     public void toggleBoundingBoxDisplay() {
-        heliBoundingBox.toggle();
+        boundingBox.toggle();
     }
 
     public void seedCloud() {
         if(this.onCloud) {
-            for(Node n : this.getParent().getChildrenUnmodifiable()) {
-                if(n instanceof Cloud && ((Cloud)n).getCloudNumber() == this.currentCloudNumber) {
-                    ((Cloud)n).activateSeeding();
+
+            for(Cloud cloud : Clouds.getCloudList()) {
+                System.out.println("test 1");
+                if(cloud.getCloudNumber() == this.currentCloudNumber) {
+                    System.out.println("test 2");
+                    cloud.activateSeeding();
+                    break;
                 }
             }
         }
@@ -428,19 +460,24 @@ class Helicopter extends GameObject {
     }
 
     public void reset() {
-        initializeHelocopterPosition(this.startPosition);
+        initializeHelicopterPosition(this.startPosition);
         this.setRotate(0);
         this.speed = 0;
         this.direction = 0;
         this.feul = 250000;
+        feulText.updateText("F:" + feul);
         this.ignitionOn = false;
 
+    }
+
+    public GameBoundingBox getBoundingBox() {
+        return boundingBox;
     }
 }
 class HeliPad extends GameObject {
     private Rectangle helipadOutline = new Rectangle(200,200);
     private Ellipse helipadCircle = new Ellipse(75,75);
-    public HeliPad(StartPosition startPosition) {
+    public HeliPad(Position startPosition) {
         initializeHelipadPosition(startPosition);
 
         this.helipadOutline.setFill(Color.TRANSPARENT);
@@ -460,7 +497,7 @@ class HeliPad extends GameObject {
         add(this.helipadCircle);
     }
 
-    private void initializeHelipadPosition(StartPosition startPosition) {
+    private void initializeHelipadPosition(Position startPosition) {
         this.setTranslateX(startPosition.xPos());
         this.setTranslateY(startPosition.yPos());
     }
@@ -473,9 +510,11 @@ class Clouds extends GameObject implements Updatable {
     private Clouds(int numberOfClouds) {
         cloudList = new ArrayList<>(numberOfClouds);
         for (int i = 0; i < numberOfClouds; i++) {
-            StartPosition cloudStartPosition = new StartPosition(Math.random()*Rainmaker.WINDOW_WIDTH,
+            Position cloudStartPosition = new Position(Math.random()*Rainmaker.WINDOW_WIDTH,
                     Math.random()*Rainmaker.WINDOW_WIDTH);
-            cloudList.add(new Cloud(cloudStartPosition));
+            Cloud c = new Cloud(cloudStartPosition);
+            cloudList.add(c);
+            this.getChildren().add(c);
         }
     }
 
@@ -484,9 +523,19 @@ class Clouds extends GameObject implements Updatable {
     }
 
     public static void reset() {
+        for(Cloud cloud : cloudList) {
+            cloud.reset();
+        }
     }
 
     public static void toggleBoundingBoxDisplay() {
+        for (Cloud cloud:cloudList) {
+            cloud.toggleBoundingBoxDisplay();
+        }
+    }
+
+    public static Clouds getClouds() {
+        return clouds;
     }
 
     public void update() {
@@ -495,57 +544,70 @@ class Clouds extends GameObject implements Updatable {
     }
 }
 class Cloud extends GameObject implements Updatable, Observer{
-    private static int NumClouds = 0;
     private int cloudNumber;
     private GameText cloudText;
     private Ellipse cloudShape;
-    private GameBoundingBox cloudBoundingBox;
+    private GameBoundingBox boundingBox;
     private Color cloudColor;
-    private int cloudSeedValue = 0;
-    public Cloud(StartPosition cloudStartPosition) {
-        this.cloudNumber = NumClouds;
-        NumClouds++;
-        this.setTranslateX(cloudStartPosition.xPos());
-        this.setTranslateY(cloudStartPosition.yPos());
+    private Position currentPosition;
+    private int SeedValue = 0;
+    public Cloud(Position cloudStartPosition) {
+        this.cloudNumber = Clouds.getCloudList().size();
+        this.currentPosition = cloudStartPosition;
+        initializeCloudPosition(cloudStartPosition);
+        buildCloud();
+    }
+
+    private void buildCloud() {
         this.cloudColor = Color.WHITE;
-        this.cloudShape = new Ellipse(0,0, 80,80);
+        this.cloudShape = new Ellipse(0,0, 60,40);
         this.cloudShape.setFill(this.cloudColor);
-        this.cloudText = new GameText(this.cloudSeedValue + "%", Color.BLACK);
+        this.cloudText = new GameText(this.SeedValue + "%", Color.BLACK);
         add(this.cloudShape);
-        add(this.cloudText);
+
 
         Rectangle cloudBounds = new Rectangle(this.getBoundsInLocal().getMinX(),
                 this.getBoundsInLocal().getMinY(),
                 this.getBoundsInLocal().getWidth(),
                 this.getBoundsInLocal().getHeight());
-        this.cloudBoundingBox = new GameBoundingBox(cloudBounds);
-
-        //add(this.cloudBoundingBox);
-        // unsure if this should be added
-
+        this.boundingBox = new GameBoundingBox(cloudBounds);
+        add(this.cloudText);
         this.cloudText.setTranslateX(-20);
         this.cloudText.setTranslateY(10);
     }
+
+    private void initializeCloudPosition(Position cloudStartPosition) {
+        this.setTranslateX(cloudStartPosition.xPos());
+        this.setTranslateY(cloudStartPosition.yPos());
+    }
+
     @Override
     public void update() {
-        if(cloudSeedValue > 50) {
+        if(SeedValue > 30) {
             this.rain();
-            cloudText.updateText(cloudSeedValue + "%");
         }
+        cloudText.updateText(SeedValue + "%");
+        this.boundingBox.setPosition(currentPosition);
+        this.cloudColor = Color.rgb(255 - SeedValue,255 - SeedValue,
+                255 - SeedValue);
+        this.cloudShape.setFill(cloudColor);
+        //System.out.println("cloud " + this.cloudNumber + "currentPosition =
+        // " + currentPosition.xPos() + ", " + currentPosition.yPos());
     }
 
     private void rain() {
-        cloudNumber -= 1;
+        //loop through list of ponds
+            //find the closest pond unfilled pond
+                // fill that pond
+
+        /*
         for(Node n : this.getParent().getChildrenUnmodifiable()) {
             if(n instanceof Pond) {
                 ((Pond)n).fillPond();
             }
         }
+         */
 
-    }
-
-    public BoundingBox getBoundingBox() {
-        return this.cloudBoundingBox.getInvisibleBoundingBox();
     }
 
     public Ellipse getCloudShape() {
@@ -556,11 +618,14 @@ class Cloud extends GameObject implements Updatable, Observer{
     }
 
     public void toggleBoundingBoxDisplay() {
-        this.cloudBoundingBox.toggle();
+        this.boundingBox.toggle();
     }
 
     public void activateSeeding() {
-        this.cloudSeedValue += 2;
+        //System.out.println("cloud # " + this.cloudNumber + "seeding");
+        if (SeedValue < 100) {
+            SeedValue++;
+        }
     }
     @Override
     public void updateObserve() {
@@ -568,6 +633,19 @@ class Cloud extends GameObject implements Updatable, Observer{
     }
 
     public void reset() {
+        this.SeedValue = 0;
+        cloudText.updateText(SeedValue + "%");
+        this.cloudColor = Color.WHITE;
+        Position cloudStartPosition = new Position(
+                Math.random()*Rainmaker.WINDOW_WIDTH,
+                Math.random()*Rainmaker.WINDOW_WIDTH);
+        currentPosition = cloudStartPosition;
+                initializeCloudPosition(cloudStartPosition);
+        this.boundingBox.setPosition(cloudStartPosition);
+    }
+
+    public GameBoundingBox getBoundingBox() {
+        return boundingBox;
     }
 }
 class Wind extends GameObject implements Updatable{
@@ -590,16 +668,49 @@ class WindParameters {
     private int windDirectonX;
     private int windDirectonY;
 }
+class Ponds extends GameObject implements Updatable {
+    private static Ponds ponds = new Ponds(3);
+    private static ArrayList<Pond> pondList;
+
+    private Ponds(int numberOfPonds) {
+        pondList = new ArrayList<>(numberOfPonds);
+        for (int i = 0; i < numberOfPonds; i++) {
+            Position pondStartPosition =
+                    new Position(Math.random()*Rainmaker.WINDOW_WIDTH,
+                    Math.random()*Rainmaker.WINDOW_WIDTH);
+            Pond p = new Pond(pondStartPosition);
+            pondList.add(p);
+            this.getChildren().add(p);
+        }
+    }
+
+    public static ArrayList<Pond> getPondList() {
+        return pondList;
+    }
+
+    public static void reset() {
+        for (Pond pond : pondList) {
+            pond.reset();
+        }
+    }
+    public static Ponds getPonds() {
+        return ponds;
+    }
+
+    public void update() {
+        for (Pond pond : this.pondList)
+            pond.update();
+    }
+}
 class Pond extends GameObject implements Updatable{
     private GameText pondText;
     private Ellipse pondShape;
     //private Color pondColor;
     private int pondFill = 0;
-    private boolean pondFull = false;
+    private boolean filled = false;
 
-    public Pond(double x, double y) {
-        this.setTranslateX(x);
-        this.setTranslateY(y);
+    public Pond(Position startPosition) {
+        initializePondPosition(startPosition);
         this.pondShape = new Ellipse(0,0, 20,20);
         this.pondText = new GameText(this.pondFill + "%", Color.WHITE);
         this.pondShape.setFill(Color.BLUE);
@@ -611,6 +722,12 @@ class Pond extends GameObject implements Updatable{
 
 
     }
+
+    private void initializePondPosition(Position startPosition) {
+        this.setTranslateX(startPosition.xPos());
+        this.setTranslateY(startPosition.yPos());
+    }
+
     @Override
     public void update() {
         if(true) { // if being filled maybe?
@@ -624,11 +741,17 @@ class Pond extends GameObject implements Updatable{
         }
         else {
             pondFill = 100;
-            pondFull = true;
+            filled = true;
         }
     }
 
     public void reset() {
+        this.pondFill = 0;
+        pondText.updateText(pondFill + "%");
+        Position pondStartPosition =
+                new Position(Math.random()*Rainmaker.WINDOW_WIDTH,
+                        Math.random()*Rainmaker.WINDOW_WIDTH);
+        initializePondPosition(pondStartPosition);
     }
 }
 class BackgroundObject extends GameObject {
@@ -652,4 +775,4 @@ class BackgroundObject extends GameObject {
     }
 }
 
-record StartPosition(double xPos, double yPos) {}
+record Position(double xPos, double yPos) {}
