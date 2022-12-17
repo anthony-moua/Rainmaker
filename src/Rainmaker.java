@@ -139,6 +139,9 @@ class GameApp extends Application {
                     helicopter.toggleBoundingBoxDisplay();
                     Clouds.toggleBoundingBoxDisplay();
                 }
+                if (event.getCode() == KeyCode.D) {
+                    Clouds.toggleDistanceLines();
+                }
                 if (event.getCode() == KeyCode.R) {
                     reset();
                 }
@@ -262,7 +265,22 @@ class GameBoundingBox implements Updatable{
                 visibleBoundingBox.getWidth(), visibleBoundingBox.getHeight());
     }
 }
-class Helicopter extends GameObject {
+abstract class abstractHelicopterState {
+
+}
+class Off extends abstractHelicopterState {
+
+}
+class Staring extends abstractHelicopterState {
+
+}
+class Stopping extends abstractHelicopterState {
+
+}
+class Ready extends abstractHelicopterState {
+
+}
+class Helicopter extends GameObject implements Updatable {
     private Ellipse helicopterBody;
     private Rotate pivotPoint = new Rotate();
     private GameBoundingBox boundingBox;
@@ -452,6 +470,12 @@ class Helicopter extends GameObject {
         return onHelipad;
     }
 }
+class HeloBody extends GameObject {
+
+}
+class HeloBlade extends GameObject {
+private Rectangle helicopterBlade;
+}
 class HeliPad extends GameObject {
     private Rectangle helipadOutline = new Rectangle(200,200);
     private Ellipse helipadCircle = new Ellipse(75,75);
@@ -520,6 +544,12 @@ class Clouds extends GameObject implements Updatable {
         return clouds;
     }
 
+    public static void toggleDistanceLines() {
+        for(Cloud cloud: cloudList) {
+            cloud.toggleDistanceLines();
+        }
+    }
+
     public void update() {
         for (Cloud cloud : this.cloudList)
             cloud.update();
@@ -532,13 +562,16 @@ class Cloud extends GameObject implements Updatable, Observer{
     private GameBoundingBox boundingBox;
     private Color cloudColor;
     private Position currentPosition;
-    private int seedValue = 0;
+    private int seedValue;
     private int cloudNumber;
     private Pond closestPond;
+    private boolean showDistanceLines;
 
     public Cloud(Position cloudStartPosition) {
         this.cloudNumber = Clouds.getCloudList().size();
         this.currentPosition = cloudStartPosition;
+        this.seedValue = 0;
+        this.showDistanceLines = false;
         initializeCloudPosition(cloudStartPosition);
         buildCloud();
         distanceLines = new ArrayList<>(Clouds.getCloudList().size());
@@ -547,7 +580,7 @@ class Cloud extends GameObject implements Updatable, Observer{
                     0,
                     pond.getTranslateX()-this.getTranslateX(),
                     pond.getTranslateY()-this.getTranslateY());
-            cloudToPond.setStroke(Color.RED);
+            cloudToPond.setStroke(Color.TRANSPARENT);
             cloudToPond.setStrokeWidth(1);
             distanceLines.add(cloudToPond);
             this.getChildren().add(cloudToPond);
@@ -604,18 +637,12 @@ class Cloud extends GameObject implements Updatable, Observer{
                 this.closestPond = pond;
             }
         }
-        closestPond.fillPond(this.seedValue);
-            //find the closest pond unfilled pond
-                // fill that pond
-
-        /*
-        for(Node n : this.getParent().getChildrenUnmodifiable()) {
-            if(n instanceof Pond) {
-                ((Pond)n).fillPond();
-            }
+        if(closestPond != null) {
+            closestPond.fillPond(this.seedValue);
         }
-         */
-
+        else {
+            System.out.println("somehow the closest pond is null");
+        }
     }
 
     private double getDistanceToPond(Pond pond) {
@@ -670,6 +697,24 @@ class Cloud extends GameObject implements Updatable, Observer{
     }
     public void decrementSeedValue() {
         this.seedValue--;
+    }
+
+    public ArrayList<Line> getDistanceLines() {
+        return distanceLines;
+    }
+
+    public void toggleDistanceLines() {
+        showDistanceLines = !showDistanceLines;
+        for (Line distanceLine : distanceLines) {
+            if(showDistanceLines) {
+                distanceLine.setStroke(Color.RED);
+            }
+            else {
+                distanceLine.setStroke(Color.TRANSPARENT);
+            }
+
+        }
+
     }
 }
 class Wind extends GameObject implements Updatable{
@@ -729,7 +774,8 @@ class Pond extends GameObject implements Updatable{
     private GameText pondText;
     private Ellipse pondShape;
     //private Color pondColor;
-    private int pondFill = 0;
+    private int pondFill;
+    private int pondFillClock;
     private boolean isFull = false;
 
     public Pond(Position startPosition) {
@@ -738,6 +784,8 @@ class Pond extends GameObject implements Updatable{
         this.pondFill = (int)(Math.random()*50);
     }
     private void buildPond() {
+        this.pondFill = 0;
+        this.pondFillClock = 0;
         this.pondShape = new Ellipse(0,0, 20,20);
         this.pondText = new GameText(this.pondFill + "%", Color.WHITE);
         this.pondShape.setFill(Color.BLUE);
@@ -761,7 +809,11 @@ class Pond extends GameObject implements Updatable{
 
     public void fillPond(int cloudSeedValue) {
         if(this.pondFill < 100) {
-            this.pondFill += 1 * (cloudSeedValue/5);
+            pondFillClock += cloudSeedValue / 10;
+            if(pondFillClock % 100 < pondFillClock) {
+                this.pondFill += 1;
+                pondFillClock = pondFillClock % 100;
+            }
         }
         else {
             pondFill = 100;
@@ -771,6 +823,7 @@ class Pond extends GameObject implements Updatable{
 
     public void reset() {
         this.pondFill = 0;
+        this.isFull = false;
         pondText.updateText(pondFill + "%");
         Position pondStartPosition =
                 new Position(Math.random()*Rainmaker.WINDOW_WIDTH,
