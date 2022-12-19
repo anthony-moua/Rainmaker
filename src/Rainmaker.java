@@ -3,6 +3,7 @@ import javafx.event.EventHandler;
 import javafx.geometry.BoundingBox;
 import javafx.scene.Scene;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.input.KeyCode;
 import javafx.scene.layout.*;
 import javafx.scene.shape.Ellipse;
@@ -55,7 +56,8 @@ class GameApp extends Application {
     }
     private void InitializeGameObjects() {
         Position heliStartPosition =
-                new Position((double)Rainmaker.WINDOW_WIDTH/2, (double)Rainmaker.WINDOW_WIDTH/5);
+                new Position((double)Rainmaker.WINDOW_WIDTH/2,
+                        (double)Rainmaker.WINDOW_WIDTH/5);
         helicopter = new Helicopter(heliStartPosition);
         heliPad = new HeliPad(heliStartPosition);
     }
@@ -113,26 +115,25 @@ class GameApp extends Application {
         scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
-                if (helicopter.getIgnition()) {
-                    if (event.getCode() == KeyCode.UP) {
-                        helicopter.speedUp();
-                    }
-                    if (event.getCode() == KeyCode.LEFT) {
-                        helicopter.turnHelicopter(-10);
-                    }
-                    if (event.getCode() == KeyCode.DOWN) {
-                        helicopter.slowDown();
-                    }
-                    if (event.getCode() == KeyCode.RIGHT) {
-                        helicopter.turnHelicopter(10);
-                    }
-                    if (event.getCode() == KeyCode.SPACE) {
-                        helicopter.seedCloud();
-                    }
+                if (event.getCode() == KeyCode.UP) {
+                    helicopter.upPressed();
+                }
+                if (event.getCode() == KeyCode.LEFT) {
+                    helicopter.leftPressed();
+                }
+                if (event.getCode() == KeyCode.DOWN) {
+                    helicopter.downPressed();
+                }
+                if (event.getCode() == KeyCode.RIGHT) {
+                    helicopter.rightPressed();
+                }
+                if (event.getCode() == KeyCode.SPACE) {
+                    helicopter.seedCloud();
                 }
                 if (event.getCode() == KeyCode.I) {
-                    if (Math.abs(helicopter.getSpeed()) <= 0.1 && helicopter.onHelipad()) {
-                        helicopter.toggleIgnition();
+                    if (Math.abs(helicopter.getSpeed()) <= 0.1
+                            && helicopter.onHelipad()) {
+                        helicopter.ignition();
                     }
                 }
                 if (event.getCode() == KeyCode.B) {
@@ -208,7 +209,7 @@ interface Updatable {
     void update();
 }
 interface Observer {
-    void updateObserve();
+    void updateObserver();
     // public void update(Observable obsu)
 }
 class GameBoundingBox implements Updatable{
@@ -265,34 +266,226 @@ class GameBoundingBox implements Updatable{
                 visibleBoundingBox.getWidth(), visibleBoundingBox.getHeight());
     }
 }
-abstract class abstractHelicopterState {
+abstract class HelicopterState {
+    private Helicopter helicopter;
+    public HelicopterState (Helicopter helicopter) {
+        this.helicopter = helicopter;
+    }
+    abstract void ignition();
 
+    abstract void burnFuel();
+
+    abstract void spinBlades();
+
+    abstract void moveHelicopter();
+    abstract void upPressed();
+    abstract void leftPressed();
+    abstract void downPressed();
+    abstract void rightPressed();
+    abstract void spacePressed();
 }
-class Off extends abstractHelicopterState {
-
+class Off extends HelicopterState {
+    private Helicopter helicopter;
+    public Off(Helicopter helicopter) {
+        super(helicopter);
+        this.helicopter = helicopter;
+    }
+    @Override
+    public void ignition() {
+        this.helicopter.changeState(new Starting(helicopter));
+    }
+    @Override
+    void burnFuel() {
+        // don't burn fuel while off
+    }
+    @Override
+    void spinBlades() {
+        //blades don't spin
+    }
+    @Override
+    void moveHelicopter() {
+        //helicopter doesn't move
+    }
+    @Override
+    void upPressed() {
+        // do nothing
+    }
+    @Override
+    void leftPressed() {
+        // do nothing
+    }
+    @Override
+    void downPressed() {
+        // do nothing
+    }
+    @Override
+    void rightPressed() {
+        // do nothing
+    }
+    @Override
+    void spacePressed() {
+        // do nothing
+    }
 }
-class Staring extends abstractHelicopterState {
-
+class Starting extends HelicopterState {
+    private Helicopter helicopter;
+    public Starting(Helicopter helicopter) {
+        super(helicopter);
+        this.helicopter = helicopter;
+    }
+    @Override
+    void ignition() {
+        this.helicopter.changeState(new Stopping(helicopter));
+    }
+    @Override
+    void burnFuel() {
+        helicopter.burnFuel(5);
+    }
+    @Override
+    void spinBlades() {
+        this.helicopter.spinUpBlades(.05);
+    }
+    @Override
+    void moveHelicopter() {
+        // helicopter doesn't move
+    }
+    @Override
+    void upPressed() {
+        // do nothing
+    }
+    @Override
+    void leftPressed() {
+        // do nothing
+    }
+    @Override
+    void downPressed() {
+        // do nothing
+    }
+    @Override
+    void rightPressed() {
+        // do nothing
+    }
+    @Override
+    void spacePressed() {
+        // do nothing
+    }
 }
-class Stopping extends abstractHelicopterState {
+class Stopping extends HelicopterState {
+    private Helicopter helicopter;
+    public Stopping(Helicopter helicopter) {
+        super(helicopter);
+        this.helicopter = helicopter;
+    }
 
+    @Override
+    void ignition() {
+        this.helicopter.changeState(new Starting(helicopter));
+    }
+    @Override
+    void burnFuel() {
+        // don't burn fuel while stopping
+    }
+
+    @Override
+    void spinBlades() {
+        this.helicopter.spinUpBlades(-.05);
+    }
+
+    @Override
+    void moveHelicopter() {
+        // helicopter doesn't move
+    }
+
+    @Override
+    void upPressed() {
+        // do nothing
+    }
+
+    @Override
+    void leftPressed() {
+        // do nothing
+    }
+
+    @Override
+    void downPressed() {
+        // do nothing
+    }
+
+    @Override
+    void rightPressed() {
+        // do nothing
+    }
+
+    @Override
+    void spacePressed() {
+        // do nothing
+    }
 }
-class Ready extends abstractHelicopterState {
+class Ready extends HelicopterState {
+    private Helicopter helicopter;
+    public Ready(Helicopter helicopter) {
+        super(helicopter);
+        this.helicopter = helicopter;
+    }
 
+    @Override
+    void ignition() {
+        this.helicopter.changeState(new Stopping(helicopter));
+    }
+    @Override
+    void burnFuel() {
+        helicopter.burnFuel(5);
+    }
+
+    @Override
+    void spinBlades() {
+        this.helicopter.rotateBlades();
+    }
+
+    @Override
+    void moveHelicopter() {
+        this.helicopter.moveHelicopter();
+    }
+
+    @Override
+    void upPressed() {
+        this.helicopter.adjustSpeed(.1);
+    }
+
+    @Override
+    void leftPressed() {
+        this.helicopter.turnHelicopter(-10);
+    }
+
+    @Override
+    void downPressed() {
+        this.helicopter.adjustSpeed(-.1);
+    }
+
+    @Override
+    void rightPressed() {
+        this.helicopter.turnHelicopter(10);
+    }
+
+    @Override
+    void spacePressed() {
+        this.helicopter.seedCloud();
+    }
 }
 class Helicopter extends GameObject implements Updatable {
-    private Ellipse helicopterBody;
+    private HelicopterState currentState;
+    private HeliBody heliBody;
+    private HeliBlade heliBlade;
     private Rotate pivotPoint = new Rotate();
     private GameBoundingBox boundingBox;
-    private Line pointerLine;
     private GameText feulText;
     private Position startPosition;
     private Position currentPosition;
     private int feul = 250000;
     private double direction = 0;
     private double speed = 0;
+    private double rotorSpeed;
     private boolean onHelipad = true;
-    private boolean ignitionOn = false;
     private boolean onCloud;
     private int currentCloudNumber = -1;
 
@@ -303,28 +496,16 @@ class Helicopter extends GameObject implements Updatable {
         initializeHelicopterPosition(startPosition);
         this.boundingBox.setPosition(currentPosition);
 
-        //this.setRotate(this.getRotate());
-
-        /*
-        this.pivotPoint.setPivotX(0);
-        this.pivotPoint.setPivotY(10);
-        this.getTransforms().addAll(pivotPoint);
-        //this.pivotPoint.setAngle(0);
-        */
+        currentState = new Off(this);
     }
 
     private void buildHelicopter() {
-        this.helicopterBody = new Ellipse(0,0,20,20);
-        this.helicopterBody.setFill(Color.YELLOW);
-        this.pointerLine = new Line(0,0,0,40);
-        this.pointerLine.setStroke(Color.YELLOW);
-        this.pointerLine.setStrokeWidth(2);
+        heliBody = new HeliBody(.75, .5);
+        heliBlade = new HeliBlade(
+                10,25, 3, Color.LIGHTGRAY);
         this.feulText = new GameText("F:" + feul, Color.YELLOW);
-
-
-        add(this.helicopterBody);
-        add(this.pointerLine);
-
+        this.add(heliBody);
+        this.add(heliBlade);
 
         Rectangle heliBounds = new Rectangle(this.getBoundsInLocal().getMinX(),
                 this.getBoundsInLocal().getMinY(),
@@ -334,8 +515,14 @@ class Helicopter extends GameObject implements Updatable {
         //add(this.heliBoundingBox.getVisibleBoundingBox());
 
         add(this.feulText);
-        this.feulText.setTranslateY(this.feulText.getTranslateY() - 30);
-        this.feulText.setTranslateX(this.feulText.getTranslateX() - 30);
+        this.feulText.setTranslateY(this.feulText.getTranslateY()-10);
+
+
+
+        this.feulText.setTranslateX(this.feulText.getTranslateX()-
+                feulText.getBoundsInLocal().getWidth()/2);
+        this.feulText.setTranslateY(this.feulText.getTranslateY()-
+                feulText.getBoundsInLocal().getHeight());
     }
 
     private void initializeHelicopterPosition(Position startPosition) {
@@ -345,54 +532,66 @@ class Helicopter extends GameObject implements Updatable {
 
     @Override
     public void update() {
-        if(feul > 0) {
-            moveHelicopter();
-            if (ignitionOn) {
-                feulText.updateText("F:" + feul);
-            }
-        }
+        // check for what state the helicopter is in
+
+        feulText.updateText("F:" + feul);
+        this.currentState.spinBlades();
+        this.currentState.moveHelicopter();
+        this.currentState.burnFuel();
         checkCollision();
-        this.boundingBox.setPosition(currentPosition);
     }
 
-    public void toggleIgnition() {
-        ignitionOn = !ignitionOn;
-        speed = 0;
+    public void spinUpBlades(double speedChange) {
+        this.rotorSpeed += speedChange;
+        rotateBlades();
+        if(speedChange > 0 && rotorSpeed > 15) {
+            rotorSpeed = 15;
+            this.changeState(new Ready(this));
+        }
+        if (speedChange < 0 && rotorSpeed < .1) {
+            this.changeState(new Off(this));
+        }
+    }
+    public void rotateBlades() {
+        this.heliBlade.setRotate(heliBlade.getRotate()+rotorSpeed);
     }
 
-    public void speedUp() {
-        speed += .1;
+    public void ignition() {
+        this.currentState.ignition();
+    }
+    public void upPressed() {
+        this.currentState.upPressed();
+    }
+    public void adjustSpeed(double speedChange) {
+        speed += speedChange;
         if(speed > 10) {
             speed = 10;
         }
-
-    }
-    public void slowDown() {
-        speed -= .1;
-        if(speed < -2) {
+        else if (speed < -2) {
             speed = -2;
         }
-
     }
-    private void burnFuel() {
+    public void downPressed() {
+        this.currentState.downPressed();
+    }
+
+    public void burnFuel(int amount) {
         if(feul > 0) {
-            int fuelBurned = 5 + (int)(speed * 10);
+            int fuelBurned = amount + (int)(speed * 10);
             feul -= fuelBurned;
         }
         if(feul <= 0) {
             feul = 0;
             feulText.updateText("F:" + feul);
-            ignitionOn = false;
+            this.changeState(new Stopping(this));
         }
+        feulText.updateText("F:" + feul);
     }
 
-    private void moveHelicopter() {
-        if(feul > 0) {
-            setTranslateX(this.getTranslateX() + Math.sin(direction) * speed);
-            setTranslateY(this.getTranslateY() + Math.cos(direction) * speed);
-            updateBoundingBoxPosition();
-            burnFuel();
-        }
+    public void moveHelicopter() {
+        setTranslateX(this.getTranslateX() + Math.sin(direction) * speed);
+        setTranslateY(this.getTranslateY() + Math.cos(direction) * speed);
+        updateBoundingBoxPosition();
     }
 
     private void updateBoundingBoxPosition() {
@@ -401,9 +600,14 @@ class Helicopter extends GameObject implements Updatable {
                 this.getTranslateY());
         this.boundingBox.setPosition(currentPosition);
     }
-
+    public void leftPressed() {
+        this.currentState.leftPressed();
+    }
+    public void rightPressed() {
+        this.currentState.rightPressed();
+    }
     public void turnHelicopter(double turnAmount) {
-        setRotate(getRotate() - turnAmount);
+        this.setRotate(this.getRotate() - turnAmount);
         direction = (direction + Math.toRadians(turnAmount)) % 360;
         reshapeBoundingBox(turnAmount);
 
@@ -423,10 +627,18 @@ class Helicopter extends GameObject implements Updatable {
         }
         this.onCloud = false;
         this.currentCloudNumber = -1;
+        /*
+        if(boundingBox.getInvisibleBoundingBox()
+                .intersects(HeliPad.getHelipad().getBoundingBox())) {
+            this.onHelipad = true;
+        }
+        else {
+            this.onHelipad = false;
+        }
+        unfinished code for checking if on helipad
+         */
     }
-    public boolean getIgnition() {
-        return ignitionOn;
-    }
+
 
     public double getSpeed() {
         return speed;
@@ -436,6 +648,9 @@ class Helicopter extends GameObject implements Updatable {
         boundingBox.toggle();
     }
 
+    public void spacePressed() {
+        this.currentState.spacePressed();
+    }
     public void seedCloud() {
         if(this.onCloud) {
 
@@ -458,7 +673,6 @@ class Helicopter extends GameObject implements Updatable {
         this.direction = 0;
         this.feul = 250000;
         feulText.updateText("F:" + feul);
-        this.ignitionOn = false;
 
     }
 
@@ -469,20 +683,59 @@ class Helicopter extends GameObject implements Updatable {
     public boolean onHelipad() {
         return onHelipad;
     }
-}
-class HeloBody extends GameObject {
 
+    public void changeState(HelicopterState state) {
+        this.currentState = state;
+    }
 }
-class HeloBlade extends GameObject {
-private Rectangle helicopterBlade;
+class HeliBody extends GameObject {
+    private ImageView heliImage;
+    public HeliBody (double scaleX, double scaleY) {
+        heliImage = new ImageView(new Image("HeliBodyImage.png"));
+        heliImage.setScaleX(scaleX);
+        heliImage.setScaleY(-scaleY);
+        this.setTranslateX(this.getTranslateX()
+                -heliImage.getBoundsInLocal().getWidth()/2);
+        this.setTranslateY(this.getTranslateY()
+                -heliImage.getBoundsInLocal().getHeight()/2);
+
+        this.getChildren().add(heliImage);
+    }
+
+    public ImageView getImage() {
+        return heliImage;
+    }
+}
+class HeliBlade extends GameObject {
+    private Line blade1;
+    private Line blade2;
+    public HeliBlade (double yOffset, double bladeLength, int width, Color c) {
+        blade1 = new Line(0,bladeLength,0,-bladeLength);
+        blade2 = new Line(bladeLength,0,-bladeLength,0);
+
+        blade1.setStroke(c);
+        blade1.setStrokeWidth(width);
+        blade2.setStroke(c);
+        blade2.setStrokeWidth(width);
+        this.add(blade1);
+        this.add(blade2);
+        this.setTranslateY(yOffset);
+    }
 }
 class HeliPad extends GameObject {
+    //private static HeliPad heliPad = new HeliPad()
     private Rectangle helipadOutline = new Rectangle(200,200);
     private Ellipse helipadCircle = new Ellipse(75,75);
     public HeliPad(Position startPosition) {
         initializeHelipadPosition(startPosition);
         buildHelipad();
     }
+/*
+    public static HeliPad getHelipad() {
+        return helipad;
+    }
+    unfinished singleton code for helipad
+ */
 
     private void buildHelipad() {
         this.helipadOutline.setFill(Color.GRAY);
@@ -515,7 +768,8 @@ class Clouds extends GameObject implements Updatable {
     private Clouds(int numberOfClouds) {
         cloudList = new ArrayList<>(numberOfClouds);
         for (int i = 0; i < numberOfClouds; i++) {
-            Position cloudStartPosition = new Position(Math.random()*Rainmaker.WINDOW_WIDTH,
+            Position cloudStartPosition =
+                    new Position(Math.random()*Rainmaker.WINDOW_WIDTH,
                     Math.random()*Rainmaker.WINDOW_HEIGHT*(2.0/3.0)
                             + Rainmaker.WINDOW_HEIGHT/3.0);
             Cloud c = new Cloud(cloudStartPosition);
@@ -623,10 +877,17 @@ class Cloud extends GameObject implements Updatable, Observer{
 
         int cloudIndex = 0;
         for(Line distanceLine : this.distanceLines) {
-            distanceLine.setEndX(Ponds.getPondList().get(cloudIndex).getTranslateX()-this.getTranslateX());
-            distanceLine.setEndY(Ponds.getPondList().get(cloudIndex).getTranslateY()-this.getTranslateY());
+            distanceLine.setEndX(Ponds.getPondList().get(cloudIndex)
+                    .getTranslateX()-this.getTranslateX());
+            distanceLine.setEndY(Ponds.getPondList().get(cloudIndex)
+                    .getTranslateY()-this.getTranslateY());
             cloudIndex++;
         }
+
+        if(this.getTranslateX() > Rainmaker.WINDOW_WIDTH + 100) {
+            this.reset();
+        }
+
     }
 
     private void rain() {
@@ -641,7 +902,7 @@ class Cloud extends GameObject implements Updatable, Observer{
             closestPond.fillPond(this.seedValue);
         }
         else {
-            System.out.println("somehow the closest pond is null");
+
         }
     }
 
@@ -672,17 +933,26 @@ class Cloud extends GameObject implements Updatable, Observer{
         }
     }
     @Override
-    public void updateObserve() {
+    public void updateObserver() {
 
     }
-
     public void reset() {
         this.seedValue = 0;
         cloudText.updateText(seedValue + "%");
         this.cloudColor = Color.WHITE;
-        Position cloudStartPosition = new Position(Math.random()*Rainmaker.WINDOW_WIDTH,
-                Math.random()*Rainmaker.WINDOW_HEIGHT*(2.0/3.0)
-                        + Rainmaker.WINDOW_HEIGHT/3.0);
+        Position cloudStartPosition;
+        if(this.getTranslateX() > Rainmaker.WINDOW_WIDTH + 100){
+            cloudStartPosition =
+                    new Position(-100, Math.random()
+                            * Rainmaker.WINDOW_HEIGHT * (2.0 / 3.0)
+                            + Rainmaker.WINDOW_HEIGHT / 3.0);
+        }
+        else {
+            cloudStartPosition =
+                    new Position(Math.random() * Rainmaker.WINDOW_WIDTH,
+                            Math.random() * Rainmaker.WINDOW_HEIGHT
+                                 * (2.0 / 3.0) + Rainmaker.WINDOW_HEIGHT / 3.0);
+        }
         currentPosition = cloudStartPosition;
                 initializeCloudPosition(cloudStartPosition);
         this.boundingBox.setPosition(cloudStartPosition);
@@ -718,7 +988,8 @@ class Cloud extends GameObject implements Updatable, Observer{
     }
 }
 class Wind extends GameObject implements Updatable{
-    private static WindParameters windParameters;
+    private static WindParameters windParameters =
+            new WindParameters(5, 1, 0);
     private static final Wind wind = new Wind(windParameters);
 
     private Wind(WindParameters windParameters) {
@@ -732,11 +1003,7 @@ class Wind extends GameObject implements Updatable{
 
     }
 }
-class WindParameters {
-    private int windSpeed = 5;
-    private int windDirectonX;
-    private int windDirectonY;
-}
+record WindParameters(double speed, double directionX, double directionY) { }
 class Ponds extends GameObject implements Updatable {
     private static Ponds ponds = new Ponds(3);
     private static ArrayList<Pond> pondList;
