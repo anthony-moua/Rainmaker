@@ -4,7 +4,7 @@ import game.Position;
 import javafx.geometry.BoundingBox;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-
+// gameobject that holds a rectangle and a bounding box
 public class GameBoundingBox implements Updatable {
     private Rectangle visibleBoundingBox;
     private BoundingBox invisibleBoundingBox;

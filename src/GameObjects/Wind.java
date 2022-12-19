@@ -1,7 +1,7 @@
 package GameObjects;
 
 import game.WindParameters;
-
+//unfinished wind implementation
 class Wind extends GameObject implements Updatable {
     private static WindParameters windParameters =
             new WindParameters(5, 1, 0);

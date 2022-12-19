@@ -23,15 +23,14 @@ public class Cloud extends GameObject implements Updatable, Observer {
 
     public Cloud(Position cloudStartPosition) {
         this.cloudNumber = Clouds.getCloudList().size();
-        this.currentPosition = cloudStartPosition;
         this.seedValue = 0;
         this.showDistanceLines = false;
+        this.currentPosition = cloudStartPosition;
         initializeCloudPosition(cloudStartPosition);
         buildCloud();
         distanceLines = new ArrayList<>(Clouds.getCloudList().size());
         for (Pond pond : Ponds.getPondList()) {
-            Line cloudToPond = new Line(0,
-                    0,
+            Line cloudToPond = new Line(0, 0,
                     pond.getTranslateX() - this.getTranslateX(),
                     pond.getTranslateY() - this.getTranslateY());
             cloudToPond.setStroke(Color.TRANSPARENT);
@@ -98,6 +97,7 @@ public class Cloud extends GameObject implements Updatable, Observer {
                 this.closestPond = pond;
             }
         }
+        // find the pond closest to this cloud and make it start filling
         if (closestPond != null) {
             closestPond.fillPond(this.seedValue);
         } else {

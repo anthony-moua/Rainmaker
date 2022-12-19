@@ -63,8 +63,10 @@ public class GameApp extends Application {
                 old = nano;
                 elapsedTime += delta;
                 game.update();
-                if (elapsedTime % 1 < previousTime % 1)
+                if (elapsedTime % 1 < previousTime % 1) {
                     game.secondPassed();
+                    // call this function every second
+                }
                 previousTime = elapsedTime;
             }
         };
@@ -80,12 +82,13 @@ public class GameApp extends Application {
         for (Cloud cloud : Clouds.getCloudList()) {
             game.getChildren().add(cloud.getBoundingBox().getVisibleBoundingBox());
         }
-
+        // bounding boxes are separate objects from their corresponding node
         game.getChildren().add(helicopter);
         game.getChildren().add(helicopter.getBoundingBox().getVisibleBoundingBox());
     }
 
     private void setUpStage(Stage stage) {
+        // set up state parameters and background
         game.setScaleY(-1);
         stage.setScene(scene);
         stage.setTitle("game.Rainmaker");
@@ -96,6 +99,7 @@ public class GameApp extends Application {
         scene.setOnKeyPressed(new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
+                // inputs results differ based on helicopter state
                 if (event.getCode() == KeyCode.UP) {
                     helicopter.upPressed();
                 }

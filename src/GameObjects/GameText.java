@@ -3,7 +3,7 @@ package GameObjects;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
-
+// gameobject that handles text updates
 class GameText extends GameObject implements Updatable {
     private Text text;
 

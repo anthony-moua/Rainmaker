@@ -3,7 +3,7 @@ import game.Position;
 import game.Rainmaker;
 
 import java.util.ArrayList;
-
+// gmaeobject that is the list of clouds
 public class Clouds extends GameObject implements Updatable {
     private static Clouds clouds = new Clouds(5);
     private static ArrayList<Cloud> cloudList;

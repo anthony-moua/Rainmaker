@@ -2,7 +2,7 @@ package GameObjects;
 
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Line;
-
+// simple gameoject of blades
 class HeliBlade extends GameObject {
     private Line blade1;
     private Line blade2;

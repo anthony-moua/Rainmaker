@@ -10,7 +10,7 @@ public class Game extends Pane implements Updatable {
     private static Game game = new Game();
 
     private Game() {
-
+        // no need
     }
 
     public static Game getGame() {
@@ -27,13 +27,14 @@ public class Game extends Pane implements Updatable {
     }
 
     public void reset() {
-
+        // Win state and conditions would be reset here
     }
 
     public void secondPassed() {
         for (Cloud cloud : Clouds.getCloudList()) {
             if (cloud.getSeedValue() > 0) {
                 cloud.decrementSeedValue();
+                // every second, the clouds decrement their seed value in sync
             }
         }
     }

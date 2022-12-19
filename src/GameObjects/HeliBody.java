@@ -2,7 +2,7 @@ package GameObjects;
 
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-
+// gameobject that is an image of the helicopter body
 class HeliBody extends GameObject {
     private ImageView heliImage;
 

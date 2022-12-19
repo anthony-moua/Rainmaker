@@ -68,9 +68,9 @@ public class Helicopter extends GameObject implements Updatable {
 
     @Override
     public void update() {
-        // check for what state the helicopter is in
-
         feulText.updateText("F:" + feul);
+        // the following behaviors will always be triggered but will have
+        // different results based on the helicopter's state
         this.currentState.spinBlades();
         this.currentState.moveHelicopter();
         this.currentState.burnFuel();
@@ -78,6 +78,7 @@ public class Helicopter extends GameObject implements Updatable {
     }
 
     public void spinUpBlades(double speedChange) {
+        // blade acceleration
         this.rotorSpeed += speedChange;
         rotateBlades();
         if (speedChange > 0 && rotorSpeed > 15) {
@@ -90,14 +91,17 @@ public class Helicopter extends GameObject implements Updatable {
     }
 
     public void rotateBlades() {
+        // blade rotation
         this.heliBlade.setRotate(heliBlade.getRotate() + rotorSpeed);
     }
 
     public void ignition() {
+        // different behavior based on helicopter state
         this.currentState.ignition();
     }
 
     public void upPressed() {
+        // different behavior based on helicopter state
         this.currentState.upPressed();
     }
 
@@ -111,10 +115,12 @@ public class Helicopter extends GameObject implements Updatable {
     }
 
     public void downPressed() {
+        // different behavior based on helicopter state
         this.currentState.downPressed();
     }
 
     public void burnFuel(int amount) {
+        // if fuel runs out, state is changed to stopping
         if (feul > 0) {
             int fuelBurned = amount + (int) (speed * 10);
             feul -= fuelBurned;
@@ -134,6 +140,8 @@ public class Helicopter extends GameObject implements Updatable {
     }
 
     private void updateBoundingBoxPosition() {
+        // bounding box isn't attatched to helicopter,
+        // so it needs to move on its own
         this.currentPosition = new Position(
                 this.getTranslateX(),
                 this.getTranslateY());
@@ -141,10 +149,12 @@ public class Helicopter extends GameObject implements Updatable {
     }
 
     public void leftPressed() {
+        // different behavior based on helicopter state
         this.currentState.leftPressed();
     }
 
     public void rightPressed() {
+        // different behavior based on helicopter state
         this.currentState.rightPressed();
     }
 
@@ -156,7 +166,8 @@ public class Helicopter extends GameObject implements Updatable {
     }
 
     private void reshapeBoundingBox(double turnAmount) {
-
+        // reshaping the bounding box was not implemented, but it would have
+        // handled here, and it would call a method in GameBoundingBox
     }
 
     private void checkCollision() {
